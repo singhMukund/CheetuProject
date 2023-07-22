@@ -1,0 +1,529 @@
+import { Application, Container, Graphics, Sprite, Texture, filters } from "pixi.js";
+// import imgSrc from '../../assets/Buttons/position_icon.png';
+
+
+export class ClickableContainer {
+    private rectangleContanier!: Container;
+    private app: Application;
+    private x_array: number[];
+    private y_array: number[];
+    private rectangleCordinate: number[][];
+    private centerXYRecCordinate: number[][];
+    private changePositionButton!: Sprite;
+    // bigFilledGraphic!: Graphics;
+    private isEnabled: boolean = true;
+    public deleteBoxEnabled:boolean = true;
+    private gapY:number = 15;
+    constructor(app: Application, key: string, container?: Container) {
+        this.app = app;
+        this.rectangleContanier = container ? container : new Container;
+        this.x_array = [];
+        this.y_array = [];
+        this.rectangleCordinate = [];
+        this.centerXYRecCordinate = [];
+        this.app.stage.addChild(this.rectangleContanier);
+        this.rectangleContanier.name = key;
+        this.initializeButtonImage();
+        // this.bigFilledGraphic = new Graphics();
+        // this.rectangleContanier.addChildAt(this.bigFilledGraphic, 0);
+        this.subscribeEvent();
+        this.movementManagement();
+    }
+
+    getConatiner(): Container {
+        return this.rectangleContanier;
+    }
+
+    public setXYArray(value1: number[], value2: number[]): void {
+        this.x_array = value1;
+        this.y_array = value2;
+    }
+
+    private deleteCenterRecCordinate(x: number, y: number) {
+        this.centerXYRecCordinate = this.centerXYRecCordinate.filter(item => !(item[0] === x && item[1] === y));
+    }
+
+    public getXYArray(): [number[], number[]] {
+        return [this.x_array, this.y_array];
+    }
+
+    public setRectangleCordinate(value: number[][]): void {
+        this.rectangleCordinate = value;
+    }
+
+    public setcenterXYRecCordinate(value: number[][]): void {
+        this.centerXYRecCordinate = value;
+    }
+
+    public getRectangleCordinate(): number[][] {
+        return this.rectangleCordinate;
+    }
+
+    public getcenterXYRecCordinate(): number[][] {
+        return this.centerXYRecCordinate;
+    }
+
+    private initializeButtonImage(): void {
+        const textture = Texture.from('../../assets/Buttons/position_icon.png');
+        this.changePositionButton = new Sprite(textture);
+        this.rectangleContanier.addChild(this.changePositionButton);
+        let changePositionButtonX = Math.min(...this.x_array) - 60;
+        let changePositionButtonY = Math.max(...this.y_array) + 20;
+        this.changePositionButton.visible = true;
+        this.changePositionButton.name = 'changePositionButton';
+        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05)
+        // const rotationButtonTexture = Texture.from(imgSrc);
+        // this.changePositionButton = new Sprite(rotationButtonTexture);
+        // this.app.stage.addChild(this.changePositionButton);
+        // this.rectangleContanier.addChild(this.changePositionButton);
+        // this.changePositionButton.x = 200;
+        // this.changePositionButton.y = 200;
+    }
+
+    private subscribeEvent(): void {
+        this.rectangleContanier.buttonMode = true;
+        // this.app.view.addEventListener('click', (event) => {
+        //     let xyPositions = this.CheckCordinateInRectangle(event.x, event.y);
+        //     if (xyPositions) {
+        //         this.createRectangle(xyPositions[0], xyPositions[1]);
+        //         console.log("Click from inside");
+        //     }
+        // });
+    }
+
+    clickOnRectangle(x: number, y: number) {
+        let xyPositions = this.CheckCordinateInRectangle(x, y);
+        if (xyPositions) {
+            this.createRectangle(xyPositions[0], xyPositions[1]);
+            console.log("Click from inside");
+        }
+    }
+
+    public checkIsThisClickIsOfSameObject(x: number, y: number): boolean {
+        if (this.rectangleContanier.x === x && this.rectangleContanier.y === y) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    
+
+    CheckCordinateInRectangle(x: number, y: number) {
+        x = x - this.rectangleContanier.x;
+        y = y - this.rectangleContanier.y;
+        if (this.rectangleCordinate.length) {
+            for (let i = 0; i < this.rectangleCordinate.length; i++) {
+                if (x >= this.rectangleCordinate[i][0] && x <= this.rectangleCordinate[i][1] && y >= this.rectangleCordinate[i][2] && y <= this.rectangleCordinate[i][3]) {
+                    return [(this.rectangleCordinate[i][1] - 30), (this.rectangleCordinate[i][3] - 10)]
+                }
+            }
+            return undefined;
+        } else {
+            return [x, y];
+        }
+    }
+
+    private createRectangle(x: number, y: number) {
+        // this.stopMouseClick = true;
+        if (this.checkAndRemove(x, y)) {
+            return;
+        }
+        if(this.checkRectangleExistOrNot(x,y)){
+            return;
+        }
+        let centerContainer = new Container();
+
+        this.x_array.push(x - 30, x + 30);
+        this.y_array.push(y - 10, y + 10);
+        // this.centerRecCordinate.push([[x - 10 , x + 10],[y - 15, y + 15]]);
+        this.centerXYRecCordinate.push([x, y]);
+        const blackedShapeGraphics = new Graphics();
+        blackedShapeGraphics.beginFill(0x171717);
+        blackedShapeGraphics.drawRect(x - 30, y - 10, 60, 20);
+        blackedShapeGraphics.endFill();
+        blackedShapeGraphics.name = 'blackedShapeGraphics';
+        centerContainer.addChild(blackedShapeGraphics);
+        var outerMostShape = new Graphics();
+        outerMostShape.lineStyle(2, 0xffffff);
+        outerMostShape.drawRect(x - (0.5 * 58), y - (0.5 * 18), 58, 18);
+        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
+        outerMostShape.alpha = 0.3;
+        outerMostShape.endFill();
+        outerMostShape.name = 'outerMostShape'
+        centerContainer.addChild(outerMostShape);
+        const outerShape = new Graphics();
+        outerShape.beginFill(0xffdb08);
+        outerShape.drawRect(x - (0.5 * 60), y - (0.5 * 20), 60, 20);
+        outerShape.endFill();
+        outerShape.name = 'outerShape';
+        centerContainer.addChild(outerShape);
+        const rectangle = new Graphics();
+        rectangle.beginFill(0x0c0c0c);
+        rectangle.drawRect(x - (0.5 * 40), y - (0.5 * 16), 40, 16);
+        rectangle.endFill();
+        rectangle.name = 'middleBlackShape';
+        centerContainer.addChild(rectangle);
+        this.createRectangleAroundTheShape(x, y, 60, 20, centerContainer);
+        centerContainer.name = `clickedCenterContainer_${x}_${y}`;
+        this.rectangleContanier.addChildAt(centerContainer, 1);
+        let changePositionButtonX = Math.min(...this.x_array) - 50;
+        let changePositionButtonY = Math.max(...this.y_array) + 20;
+        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
+    }
+
+    public zonesCount() : number[] {
+         let zone_D_Interior_Panel : number = ((Array.from(new Set(this.x_array))).length - 5) * ((Array.from(new Set(this.y_array))).length - 3);
+         let zone_B_Edge_count : number = ((Array.from(new Set(this.y_array))).length - 2) * 2;
+         let zone_B_north_row_count : number = ((Array.from(new Set(this.x_array))).length - 3);
+         let zone_A_count : number = 2;
+         let zone_C_South_south : number = ((Array.from(new Set(this.x_array))).length - 5);
+         let zone_C_Interior_Panel : number = zone_B_Edge_count;
+         return [zone_A_count,zone_B_Edge_count,zone_B_north_row_count,zone_C_South_south,zone_C_Interior_Panel,zone_D_Interior_Panel] ;
+    }
+
+    private fillRectangle(x: number, y: number) {
+        let fillCenterContainer = new Container();
+        const blackedShapeGraphics = new Graphics();
+        blackedShapeGraphics.beginFill(0x171717);
+        blackedShapeGraphics.drawRect(x - 30, y - 10, 60, 20);
+        blackedShapeGraphics.endFill();
+        blackedShapeGraphics.name = 'blackedShapeGraphics';
+        fillCenterContainer.addChild(blackedShapeGraphics);
+        var outerMostShape = new Graphics();
+        outerMostShape.lineStyle(2, 0xffffff);
+        outerMostShape.drawRect(x - (0.5 * 58), y - (0.5 * 18), 58, 18);
+        outerMostShape.endFill();
+        outerMostShape.alpha = 0.3;
+        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
+        outerMostShape.name = 'outerMostShape';
+        fillCenterContainer.addChild(outerMostShape);
+        const outerShape = new Graphics();
+        outerShape.beginFill(0xffdb08);
+        outerShape.drawRect(x - (0.5 * 60), y - (0.5 * 20), 60, 20);
+        outerShape.endFill();
+        fillCenterContainer.addChild(outerShape);
+        const rectangle = new Graphics();
+        rectangle.beginFill(0x0c0c0c);
+        rectangle.drawRect(x - (0.5 * 40), y - (0.5 * 16), 40, 16);
+        rectangle.endFill();
+        rectangle.name = 'middleBlackShape';
+        fillCenterContainer.addChild(rectangle);
+        fillCenterContainer.name = `clickedCenterContainer_${x}_${y}`;
+        this.createRectangleAroundTheShape(x, y, 60, 20, fillCenterContainer);
+        this.rectangleContanier.addChildAt(fillCenterContainer, 1);
+        let changePositionButtonX = Math.min(...this.x_array) - 60;
+        let changePositionButtonY = Math.max(...this.y_array) + 20;
+        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
+    }
+
+    private checkRectangleExistOrNot(x:number,y:number){
+        for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            if (this.rectangleContanier.children[i].name === `clickedCenterContainer_${x}_${y}`) {
+                 return true;
+            }
+        }
+        return false;
+    }
+
+    private checkAndRemove(x: number, y: number): boolean {
+        if(!this.deleteBoxEnabled){
+            return false;
+        }
+        for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            if (this.rectangleContanier.children[i].name === `clickedCenterContainer_${x}_${y}`) {
+                this.rectangleContanier.removeChild(this.rectangleContanier.children[i]);
+                this.deleteElement(this.x_array, x);
+                this.deleteElement(this.y_array, y);
+                this.deleteCenterRecCordinate(x, y);
+                this.deleteRectangleCoordinate(x, y, 60, 20);
+                if (this.rectangleContanier.children.length === 1) {
+                    this.destroy();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    setPositionButtonVisible(action: boolean): void {
+        this.changePositionButton.visible = action;
+    }
+
+    destroy() {
+        this.rectangleContanier.parent.removeChild(this.rectangleContanier);
+        this.rectangleContanier.destroy({ children: true, texture: true, baseTexture: true });
+        this.x_array = [];
+        this.y_array = [];
+        this.rectangleCordinate = [];
+        this.centerXYRecCordinate = [];
+    }
+
+    private deleteElement(array: number[], elements: number): void {
+        const index = array.indexOf(elements);
+        if (index > -1) { // only splice array when item is found
+            array.splice(index, 1); // 2nd parameter means remove one item only
+        }
+    }
+
+    private deleteRectangleCoordinate(x: number, y: number, w: number, h: number) {
+        this.checkAndFilterRectangleCordinate(x - (1.5 * w), x - (1.5 * w), y - (0.5 * h), y - (0.5 * h) + 20);
+        this.checkAndFilterRectangleCordinate(x - (0.5 * w), x - (0.5 * w) + 60, y - (1.5 * h), y - (1.5 * h) + 20);
+        this.checkAndFilterRectangleCordinate(x + (0.5 * w), x + (0.5 * w) + 60, y - (0.5 * h), y - (0.5 * h) + 20);
+        this.checkAndFilterRectangleCordinate(x - (0.5 * w), x - (0.5 * w), y + (0.5 * h), y + (0.5 * h) + 20);
+        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (1.5 * w) && item[1]=== x - (1.5 * w) + 20 && item[2]=== y - (0.5 * h) && item[3]=== y - (0.5 * h) + 30));
+        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (0.5 * w) && item[1]=== x - (0.5 * w) + 20 && item[2]=== y - (1.5 * h) && item[3]=== y - (1.5 * h) + 30));
+        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x + (0.5 * w) && item[1]=== x + (0.5 * w) + 20 && item[2]=== y - (0.5 * h) && item[3]=== y - (0.5 * h) + 30));
+        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (0.5 * w) && item[1]=== x - (0.5 * w) + 20 && item[2]=== y + (0.5 * h) && item[3]=== y + (0.5 * h) + 30));
+
+    }
+
+    private checkAndFilterRectangleCordinate(x1: number, x2: number, y1: number, y2: number): void {
+        if (!(this.rectangleCordinateIsInCenterRectangle(x1, x2, y1, y2))) {
+            this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0] === x1 && item[1] === x2 && item[2] === y1 && item[3] === y2));
+        }
+    }
+
+    private rectangleCordinateIsInCenterRectangle(x1: number, x2: number, y1: number, y2: number): boolean {
+        for (let i: number = 0; i < this.centerXYRecCordinate.length; i++) {
+            let newArray: number[] = [this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][0] + 30, this.centerXYRecCordinate[i][1] - 10, this.centerXYRecCordinate[i][1] + 10];
+            if (newArray[0] === x1 && newArray[1] === x2 && newArray[2] === y1 && newArray[3] === y2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private centerContainer(): void {
+
+    }
+
+    changeButtonPosition(): void {
+        this.changePositionButton.visible = true;
+        let changePositionButtonX = Math.min(...this.x_array) - 60;
+        let changePositionButtonY = Math.max(...this.y_array) + 20;
+        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
+    }
+
+    createRectangleAroundTheShape(x: number, y: number, w: number, h: number, centerContainer: Container) {
+        // var surroundedRectCont = new Container();
+        var surroundedRect = new Graphics();
+        surroundedRect.lineStyle(2, 0xffffff);
+        surroundedRect.drawRect(x - (1.5 * w), y - (0.5 * h), w, h)
+        surroundedRect.endFill();
+        centerContainer.addChild(surroundedRect);
+        this.rectangleCordinate.push([x - (1.5 * w), x - (1.5 * w) + 60, y - (0.5 * h), y - (0.5 * h) + 20]);
+
+        surroundedRect.lineStyle(2, 0xffffff);
+        surroundedRect.drawRect(x - (0.5 * w), y - (1.5 * h) - this.gapY, w, h)
+        surroundedRect.endFill();
+        centerContainer.addChild(surroundedRect);
+        this.rectangleCordinate.push([x - (0.5 * w), x - (0.5 * w) + 60, y - (1.5 * h) - this.gapY, y - (1.5 * h) + 20 - this.gapY]);
+
+        surroundedRect.lineStyle(2, 0xffffff);
+        surroundedRect.drawRect(x + (0.5 * w), y - (0.5 * h), w, h)
+        surroundedRect.endFill();
+        centerContainer.addChild(surroundedRect);
+        this.rectangleCordinate.push([x + (0.5 * w), x + (0.5 * w) + 60, y - (0.5 * h), y - (0.5 * h) + 20]);
+
+        surroundedRect.lineStyle(2, 0xffffff);
+        surroundedRect.drawRect(x - (0.5 * w), y + (0.5 * h) + this.gapY, w, h)
+        surroundedRect.endFill();
+        surroundedRect.name = 'surroundedRect';
+        centerContainer.addChild(surroundedRect);
+        this.rectangleCordinate.push([x - (0.5 * w), x - (0.5 * w) + 60, y + (0.5 * h) + this.gapY, y + (0.5 * h) + this.gapY + 20]);
+        // centerContainer.addChild(surroundedRectCont);
+    }
+
+    returnXY(): number[] {
+        return [this.rectangleContanier.x, this.rectangleContanier.y];
+    }
+
+    setXY(x: number, y: number): void {
+        this.rectangleContanier.x = x;
+        this.rectangleContanier.y = y;
+    }
+
+    clickOnBigFilledGraphic(): void {
+        // if(!this.bigFilledGraphic){
+        //     return
+        // }
+        // this.bigFilledGraphic.interactive = true;
+        // this.bigFilledGraphic.buttonMode = true;
+        // this.bigFilledGraphic.off("pointerdown");
+        // this.bigFilledGraphic.on("pointerdown", this.pointerClick.bind(this));
+    }
+
+    // private pointerClick(event:any) :void{
+    //     this.setEnabled(true);
+    //     this.showAll();
+    // }
+
+    private movementManagement(): void {
+        this.changePositionButton.interactive = true;
+        this.changePositionButton.buttonMode = true;
+
+        let clickOffsetX = 0;
+        let clickOffsetY = 0;
+
+        this.changePositionButton.on("pointerdown", (event: any) => {
+            clickOffsetX = event.data.global.x - this.rectangleContanier.x;
+            clickOffsetY = event.data.global.y - this.rectangleContanier.y;
+        });
+
+        this.changePositionButton.on("pointerup", () => {
+            clickOffsetX = 0;
+            clickOffsetY = 0;
+        });
+
+        this.changePositionButton.on("pointermove", (event: any) => {
+            if (clickOffsetX !== 0 && clickOffsetY !== 0) {
+                this.rectangleContanier.x = event.data.global.x - clickOffsetX;
+                this.rectangleContanier.y = event.data.global.y - clickOffsetY;
+            }
+        });
+    }
+
+
+    onButtonDown(): void {
+        console.log(this.centerXYRecCordinate);
+        let x = Math.min(...this.x_array);
+        let y = Math.min(...this.y_array);
+        let outputArray = this.convertArray(this.centerXYRecCordinate);
+        for (let i = 0; i < outputArray.length; i++) {
+            let x_new = outputArray[i][0];
+            let y_new = outputArray[i][1];
+            this.fillRectangle(x_new, y_new);
+        }
+        let width = Math.max(...this.x_array) - Math.min(...this.x_array);
+        let height = Math.max(...this.y_array) - Math.min(...this.y_array);
+        // this.bigFilledGraphic.name = 'bigFilledGraphic'
+        // this.bigFilledGraphic.beginFill(0x121212);
+        // this.bigFilledGraphic.drawRect(x, y, width, height);
+        // this.bigFilledGraphic.endFill();
+        // this.rectangleContanier.addChildAt(this.bigFilledGraphic, 0);
+    }
+
+    public hideAll(): void {
+        // const color = new filters.ColorMatrixFilter();
+        // color.desaturate();
+        for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            if ((this.rectangleContanier.children[i] as Container).children.length) {
+                for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
+                    if (!((this.rectangleContanier.children[i] as Container).children[j].name === 'blackedShapeGraphics' ||
+                        (this.rectangleContanier.children[i] as Container).children[j].name === 'outerMostShape')) {
+                        // (this.rectangleContanier.children[i] as Container).children[j].filters  =  [color];
+                        (this.rectangleContanier.children[i] as Container).children[j].visible = false;
+                    }
+                }
+            }
+        }
+        this.setPositionButtonVisible(false);
+        // his.bigFilledGraphic.visible = true;
+    }
+
+    public showAll(): void {
+        for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            if ((this.rectangleContanier.children[i] as Container).children.length) {
+                for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
+                    (this.rectangleContanier.children[i] as Container).children[j].visible = true;
+                }
+            }
+        }
+        this.changePositionButton.visible = true;
+    }
+
+    public setEnabled(value: boolean): void {
+        this.isEnabled = value;
+    }
+
+    public getEnabled(): boolean {
+        return this.isEnabled;
+    }
+
+    // private convertArray(inputArray: number[][]) {
+    //     const col1 = inputArray.map((subArray) => subArray[0]);
+    //     const col2 = inputArray.map((subArray) => subArray[1]);
+    //     col1.sort((x1, x2) => x1 - x2);
+    //     col2.sort((y1, y2) => y1 - y2);
+    //     const outputArray = [];
+    //     for (const num1 of col1) {
+    //         for (const num2 of col2) {
+    //             outputArray.push([num1, num2]);
+    //         }
+    //     }
+    //     return outputArray;
+    // }
+
+    convertArray(inputArray: number[][]): number[][] {
+        let col1 = inputArray.map((subArray) => subArray[0]);
+        col1 = Array.from(new Set(col1))
+        let col2 = inputArray.map((subArray) => subArray[1]);
+        col2 = Array.from(new Set(col2))
+        col1.sort((x1, x2) => x1 - x2);
+        col2.sort((y1, y2) => y1 - y2);
+        const outputArray: number[][] = [];
+        for (const num1 of col1) {
+            for (const num2 of col2) {
+                outputArray.push([num1, num2]);
+            }
+        }
+        const newOutArray: number[][] = [];
+        for (let i: number = 0; i < outputArray.length; i++) {
+            if (!(inputArray.some(subArray => JSON.stringify(subArray) === JSON.stringify(outputArray[i])))) {
+                newOutArray.push(outputArray[i])
+            }
+        }
+        return newOutArray;
+    }
+
+
+
+    cloneContainer() {
+        let newContainer = new Container();
+
+        // Clone each child shape and add it to the new container
+        this.rectangleContanier.children.forEach((child) => {
+            if (!(child instanceof Sprite)) {
+                if ((child.name === 'bigFilledGraphic')) {
+                    let clonedChild = (child as any).clone();
+                    newContainer.addChild(clonedChild);
+                } else {
+                    // const clonedChild = (child as any).clone();
+                    // newContainer.addChild(clonedChild);
+                    const clonedChildContainer = this.cloneOfContainerType(child as any)
+                    newContainer.addChild(clonedChildContainer);
+                }
+            }
+        });
+
+        return newContainer;
+    }
+
+    private cloneOfContainerType(containerAtLocal: Container): Container {
+        let clonedContainer = new Container();
+        // Clone the properties of the original container
+        clonedContainer.position.copyFrom(containerAtLocal.position);
+        clonedContainer.scale.copyFrom(containerAtLocal.scale);
+        clonedContainer.rotation = containerAtLocal.rotation;
+        clonedContainer.name = containerAtLocal.name;
+
+        // Clone the children elements of the original container
+        for (let i: number = 0; i < containerAtLocal.children.length; i++) {
+            let clonedChild;
+            // if((containerAtLocal.children[i] as Graphics).name === 'blackedShapeGraphics' || 
+            //    (containerAtLocal.children[i] as Graphics).name === 'outerMostShape'){
+
+            // }else{
+            //     clonedChild = (containerAtLocal.children[i] as Graphics).clone();
+            // }
+
+            clonedChild = (containerAtLocal.children[i] as Graphics).clone();
+            clonedChild.name = (containerAtLocal.children[i] as Graphics).name;
+            clonedChild.visible = true;
+            clonedChild.alpha = (containerAtLocal.children[i] as Graphics).alpha;
+            clonedContainer.addChild(clonedChild);
+        }
+        return clonedContainer;
+    }
+}
