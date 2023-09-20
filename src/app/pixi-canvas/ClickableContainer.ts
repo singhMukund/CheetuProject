@@ -1,6 +1,8 @@
-import { Application, Container, Graphics, Sprite, Texture, filters } from "pixi.js";
 // import imgSrc from '../../assets/Buttons/position_icon.png';
 
+import { Application, Container, Graphics, Sprite, Texture } from "pixi.js";
+
+// @ts-ignore
 
 export class ClickableContainer {
     private rectangleContanier!: Container;
@@ -8,26 +10,57 @@ export class ClickableContainer {
     private x_array: number[];
     private y_array: number[];
     private rectangleCordinate: number[][];
-    private centerXYRecCordinate: number[][];
+    centerXYRecCordinate: number[][];
     private changePositionButton!: Sprite;
+    private imagedContainer!: Container;
+
     // bigFilledGraphic!: Graphics;
     private isEnabled: boolean = true;
-    public deleteBoxEnabled:boolean = true;
-    private gapY:number = 15;
+    public deleteBoxEnabled: boolean = true;
+    private gapY: number = 15;
+    private zonesColor = {
+        zones_A: 0xfd0000,
+        zone_B_north_row_count: 0xffbf03,
+        zone_B_Edge_count: 0xffbf03,
+        zone_C_South_south: 0x01b0ee,
+        zone_C_Interior_Panel: 0x01b0ee,
+        zone_D_Interior_Panel: 0x93d152
+    }
+    private zones_A_positions: number[][] = [];
+    private zone_B_north_row_count_positions: number[][] = [];
+    private zone_B_Edge_count_positions: number[][] = [];
+    private zone_C_South_south_positions: number[][] = [];
+    private zone_C_Interior_Panel_positions: number[][] = [];
+    private zone_D_Interior_Panel_positions: number[][] = [];
+    centerxycordinatesMapInXPerspective: Map<number, number[][]> = new Map();
+    centerxycordinatesMapInYPerspective: Map<number, number[][]> = new Map();
+    private centerXPosition: number[] = [];
+    private centerYPosition: number[] = [];
+    private virtualyRowAndCol: number[][][] = [];
+
+
     constructor(app: Application, key: string, container?: Container) {
         this.app = app;
         this.rectangleContanier = container ? container : new Container;
+
         this.x_array = [];
         this.y_array = [];
         this.rectangleCordinate = [];
         this.centerXYRecCordinate = [];
         this.app.stage.addChild(this.rectangleContanier);
+        this.imagedContainer = new Container;
+        this.app.stage.addChild(this.imagedContainer);
+        // @ts-ignore
         this.rectangleContanier.name = key;
         this.initializeButtonImage();
         // this.bigFilledGraphic = new Graphics();
         // this.rectangleContanier.addChildAt(this.bigFilledGraphic, 0);
         this.subscribeEvent();
         this.movementManagement();
+    }
+
+    setGapY(y: number) :void{
+      this.gapY = y;
     }
 
     getConatiner(): Container {
@@ -41,6 +74,26 @@ export class ClickableContainer {
 
     private deleteCenterRecCordinate(x: number, y: number) {
         this.centerXYRecCordinate = this.centerXYRecCordinate.filter(item => !(item[0] === x && item[1] === y));
+        if (this.centerxycordinatesMapInYPerspective.has(y)) {
+            let value = this.centerxycordinatesMapInYPerspective.get(y);
+            const index = value!.findIndex((subarray) => subarray[0] === x && subarray[1] === y);
+            if (index !== -1) {
+                value!.splice(index, 1);
+            }
+            if (value?.length === 0) {
+                this.centerxycordinatesMapInYPerspective.delete(y);
+            }
+        }
+        if (this.centerxycordinatesMapInXPerspective.has(x)) {
+            let value = this.centerxycordinatesMapInXPerspective.get(x);
+            const index = value!.findIndex((subarray) => subarray[0] === x && subarray[1] === y);
+            if (index !== -1) {
+                value!.splice(index, 1);
+            }
+            if (value?.length === 0) {
+                this.centerxycordinatesMapInXPerspective.delete(x);
+            }
+        }
     }
 
     public getXYArray(): [number[], number[]] {
@@ -70,8 +123,9 @@ export class ClickableContainer {
         let changePositionButtonX = Math.min(...this.x_array) - 60;
         let changePositionButtonY = Math.max(...this.y_array) + 20;
         this.changePositionButton.visible = true;
+        // @ts-ignore
         this.changePositionButton.name = 'changePositionButton';
-        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05)
+        this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
         // const rotationButtonTexture = Texture.from(imgSrc);
         // this.changePositionButton = new Sprite(rotationButtonTexture);
         // this.app.stage.addChild(this.changePositionButton);
@@ -80,7 +134,10 @@ export class ClickableContainer {
         // this.changePositionButton.y = 200;
     }
 
+
+
     private subscribeEvent(): void {
+        // @ts-ignore
         this.rectangleContanier.buttonMode = true;
         // this.app.view.addEventListener('click', (event) => {
         //     let xyPositions = this.CheckCordinateInRectangle(event.x, event.y);
@@ -107,7 +164,7 @@ export class ClickableContainer {
         }
     }
 
-    
+
 
     CheckCordinateInRectangle(x: number, y: number) {
         x = x - this.rectangleContanier.x;
@@ -129,75 +186,479 @@ export class ClickableContainer {
         if (this.checkAndRemove(x, y)) {
             return;
         }
-        if(this.checkRectangleExistOrNot(x,y)){
+        if (this.checkRectangleExistOrNot(x, y)) {
             return;
         }
         let centerContainer = new Container();
-
-        this.x_array.push(x - 30, x + 30);
-        this.y_array.push(y - 10, y + 10);
         // this.centerRecCordinate.push([[x - 10 , x + 10],[y - 15, y + 15]]);
-        this.centerXYRecCordinate.push([x, y]);
         const blackedShapeGraphics = new Graphics();
         blackedShapeGraphics.beginFill(0x171717);
         blackedShapeGraphics.drawRect(x - 30, y - 10, 60, 20);
         blackedShapeGraphics.endFill();
+        // @ts-ignore
         blackedShapeGraphics.name = 'blackedShapeGraphics';
         centerContainer.addChild(blackedShapeGraphics);
         var outerMostShape = new Graphics();
         outerMostShape.lineStyle(2, 0xffffff);
         outerMostShape.drawRect(x - (0.5 * 58), y - (0.5 * 18), 58, 18);
-        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
         outerMostShape.alpha = 0.3;
         outerMostShape.endFill();
+        // @ts-ignore
         outerMostShape.name = 'outerMostShape'
         centerContainer.addChild(outerMostShape);
         const outerShape = new Graphics();
         outerShape.beginFill(0xffdb08);
         outerShape.drawRect(x - (0.5 * 60), y - (0.5 * 20), 60, 20);
         outerShape.endFill();
+        // @ts-ignore
         outerShape.name = 'outerShape';
         centerContainer.addChild(outerShape);
         const rectangle = new Graphics();
         rectangle.beginFill(0x0c0c0c);
         rectangle.drawRect(x - (0.5 * 40), y - (0.5 * 16), 40, 16);
         rectangle.endFill();
+        // @ts-ignore
         rectangle.name = 'middleBlackShape';
         centerContainer.addChild(rectangle);
         this.createRectangleAroundTheShape(x, y, 60, 20, centerContainer);
+        this.x_array.push(x - 30, x + 30);
+        this.y_array.push(y - 10, y + 10);
+        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
+        this.centerXYRecCordinate.push([x, y]);
+        if (this.centerXPosition.indexOf(x) === -1) {
+            this.centerXPosition.push(x);
+        }
+        if (this.centerYPosition.indexOf(y) === -1) {
+            this.centerYPosition.push(y);
+        }
+        if (this.centerxycordinatesMapInYPerspective.has(y)) {
+            const existingValue = this.centerxycordinatesMapInYPerspective.get(y);
+            if (existingValue !== undefined) {
+                existingValue.push([x, y]);
+                existingValue.sort((a, b) => a[0] - b[0]);
+                this.centerxycordinatesMapInYPerspective.set(y, existingValue);
+            }
+
+        } else {
+            this.centerxycordinatesMapInYPerspective.set(y, [[x, y]]);
+        }
+        if (this.centerxycordinatesMapInXPerspective.has(x)) {
+            const existingValue = this.centerxycordinatesMapInXPerspective.get(x);
+            if (existingValue !== undefined) {
+                existingValue.push([x, y]);
+                existingValue.sort((a, b) => a[1] - b[1]);
+                this.centerxycordinatesMapInXPerspective.set(x, existingValue);
+            }
+
+        } else {
+            this.centerxycordinatesMapInXPerspective.set(x, [[x, y]]);
+        }
+        // @ts-ignore
         centerContainer.name = `clickedCenterContainer_${x}_${y}`;
         this.rectangleContanier.addChildAt(centerContainer, 1);
         let changePositionButtonX = Math.min(...this.x_array) - 50;
         let changePositionButtonY = Math.max(...this.y_array) + 20;
         this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
+        console.log("Total Row" +this.centerYPosition.length);
     }
 
-    public zonesCount() : number[] {
-         let zone_D_Interior_Panel : number = ((Array.from(new Set(this.x_array))).length - 5) * ((Array.from(new Set(this.y_array))).length - 3);
-         let zone_B_Edge_count : number = ((Array.from(new Set(this.y_array))).length - 2) * 2;
-         let zone_B_north_row_count : number = ((Array.from(new Set(this.x_array))).length - 3);
-         let zone_A_count : number = 2;
-         let zone_C_South_south : number = ((Array.from(new Set(this.x_array))).length - 5);
-         let zone_C_Interior_Panel : number = zone_B_Edge_count;
-         return [zone_A_count,zone_B_Edge_count,zone_B_north_row_count,zone_C_South_south,zone_C_Interior_Panel,zone_D_Interior_Panel] ;
+    // public getCenterYPosition() :
+
+    public zonesCount(): number[] {
+        return this.setZonesPositions();
+    }
+
+    getImageContainer() : Container{
+        // const newContainer = this.cloneImageContainer();
+        return this.imagedContainer;
+    }
+
+    private createZoneImage(x:number,y:number,colorCode:number) :Container{
+        const zoneContainer = new Container();
+        let zonesShape = new Graphics();
+        //0xdae9eb
+        zonesShape.lineStyle(2,0xdae9eb);
+        zonesShape.drawRect(x, y, 60, 20);
+        zonesShape.endFill();
+        zoneContainer.addChild(zonesShape)
+        zonesShape.beginFill(colorCode);
+        zonesShape.drawRect(x + 10, y, 20, 20);
+        zonesShape.endFill();
+        zoneContainer.addChild(zonesShape)
+        zonesShape.beginFill(colorCode);
+        zonesShape.drawRect(x + 40, y, 20, 20);
+        zonesShape.endFill();
+        zoneContainer.addChild(zonesShape)
+        return zoneContainer;
+    }
+
+    createImageContainer(): void {
+        this.imagedContainer.removeChildren();
+        this.imagedContainer.visible = true;
+        this.imagedContainer.setTransform(this.rectangleContanier.x, this.rectangleContanier.y )
+        this.zones_A_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zones_A);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zonesAShape';
+            this.imagedContainer.addChild(zoneShapeContainer);
+        });
+        this.zone_B_Edge_count_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zone_B_Edge_count);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zone_B_Edge';
+            this.imagedContainer.addChild(zoneShapeContainer);
+        });
+        this.zone_B_north_row_count_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zone_B_north_row_count);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zone_B_north_row';
+            this.imagedContainer.addChild(zoneShapeContainer);
+
+        });
+        this.zone_C_Interior_Panel_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zone_C_Interior_Panel);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zone_C_Interior_Panel';
+            this.imagedContainer.addChild(zoneShapeContainer);
+        });
+        this.zone_C_South_south_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zone_C_South_south);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zone_C_South_south';
+            // this.imagedContainer.addChild(zonesAShape);
+            this.imagedContainer.addChild(zoneShapeContainer);
+        });
+        this.zone_D_Interior_Panel_positions.forEach((zone_Positions) => {
+            let zoneShapeContainer = this.createZoneImage(zone_Positions[0], zone_Positions[1],this.zonesColor.zone_D_Interior_Panel);
+            // @ts-ignore
+            zoneShapeContainer.name = 'zone_D_Interior_Panel';
+            this.imagedContainer.addChild(zoneShapeContainer);
+        });
+    }
+
+    isSubArrayPresent(arr: number[][], subArray: number[]): boolean {
+        for (const element of arr) {
+            if (element.length !== subArray.length) {
+                continue;
+            }
+
+            let isMatch = true;
+            for (let i = 0; i < element.length; i++) {
+                if (element[i] !== subArray[i]) {
+                    isMatch = false;
+                    break;
+                }
+            }
+
+            if (isMatch) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    areArraysEqual(arr1: number[], arr2: number[]): boolean {
+        if (arr1.length !== arr2.length) {
+            return false;
+        }
+
+        for (let i = 0; i < arr1.length; i++) {
+            if (arr1[i] !== arr2[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    findMinKeyInMap<K>(map: Map<K, any>): K | undefined {
+        let minKey: K | undefined = undefined;
+        for (const key of map.keys()) {
+            if (minKey === undefined || (minKey && key < minKey)) {
+                minKey = key;
+            }
+        }
+        return minKey;
+    }
+
+    findMaxKeyInMap<K>(map: Map<K, any>): K | undefined {
+        let maxKey: K | undefined = undefined;
+        for (const key of map.keys()) {
+            if (maxKey === undefined || (maxKey && key > maxKey)) {
+                maxKey = key;
+            }
+        }
+        return maxKey;
+    }
+
+    private setZonesPositions(): number[] {
+        let remaingZones: number[][] = [];
+        // console.clear()
+        this.resetZonesPositions();
+        this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
+            if (value[0]) {
+                let yRowValue = this.centerxycordinatesMapInXPerspective.get(value[0][0]);
+                if (yRowValue) {
+                    if (this.areArraysEqual(value[0], yRowValue[0])) {
+                        this.zones_A_positions.push([value[0][0] - 30, value[0][1] - 10]);
+                        remaingZones.push(value[0]);
+                    }
+                    if (!this.areArraysEqual(value[0], value[value.length - 1])) {
+                        yRowValue = this.centerxycordinatesMapInXPerspective.get(value[value.length - 1][0]);
+                        if (yRowValue) {
+                            if (this.areArraysEqual(value[value.length - 1], yRowValue[0])) {
+                                this.zones_A_positions.push([value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]);
+                                remaingZones.push(value[value.length - 1]);
+                            }
+                        }
+                    }
+                }
+
+            }
+        });
+        for(let i : number = 0; i< this.centerXYRecCordinate.length;i++){
+            let nearestXPosition = this.centerXYRecCordinate[i][0] - 60;
+            let nearestRightXPosition = this.centerXYRecCordinate[i][0] + 60;
+            let nearestYPosition = this.centerXYRecCordinate[i][1] - 20 - this.gapY;
+            let isNerestLeftAvailable = this.isSubArrayPresent(this.centerXYRecCordinate,[nearestXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearesetRightAvailable=this.isSubArrayPresent(this.centerXYRecCordinate,[nearestRightXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearestUppAvailable =this.isSubArrayPresent(this.centerXYRecCordinate,[this.centerXYRecCordinate[i][0],nearestYPosition]);
+            if((!isNerestLeftAvailable && !isNearestUppAvailable) || (!isNearesetRightAvailable && !isNearestUppAvailable)){
+                if(!this.isSubArrayPresent(this.zones_A_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                    this.zones_A_positions.push([this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][1] - 10]);
+                    remaingZones.push(this.centerXYRecCordinate[i]);
+                }
+            }
+        }
+        console.log('zones_A_positions');
+        console.log(this.zones_A_positions);
+
+
+        let minKey = this.findMinKeyInMap(this.centerxycordinatesMapInYPerspective);
+        let maxKey = this.findMaxKeyInMap(this.centerxycordinatesMapInYPerspective);
+
+        this.centerxycordinatesMapInXPerspective.forEach((value, key) => {
+            if (this.isSubArrayPresent(this.zones_A_positions, [value[0][0] - 30, value[0][1] - 10]) === false) {
+                if (this.isSubArrayPresent(this.zone_B_north_row_count_positions, [value[0][0] - 30, value[0][1] - 10]) === false) {
+                    this.zone_B_north_row_count_positions.push([value[0][0] - 30, value[0][1] - 10]);
+                    remaingZones.push(value[0]);
+                }
+            }
+        });
+        for(let i : number = 0; i< this.centerXYRecCordinate.length;i++){
+            let nearestXPosition = this.centerXYRecCordinate[i][0] - 60;
+            let nearestRightXPosition = this.centerXYRecCordinate[i][0] + 60;
+            let nearestYPosition = this.centerXYRecCordinate[i][1] - 20 - this.gapY;
+            let isNerestLeftAvailable = this.isSubArrayPresent(this.centerXYRecCordinate,[nearestXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearesetRightAvailable=this.isSubArrayPresent(this.centerXYRecCordinate,[nearestRightXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearestUppAvailable =this.isSubArrayPresent(this.centerXYRecCordinate,[this.centerXYRecCordinate[i][0],nearestYPosition]);
+            if((isNerestLeftAvailable && !isNearestUppAvailable) || (isNearesetRightAvailable && !isNearestUppAvailable)){
+                if(!this.isSubArrayPresent(this.zones_A_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                    if(!this.isSubArrayPresent(this.zone_B_north_row_count_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                        this.zone_B_north_row_count_positions.push([this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][1] - 10]);
+                        remaingZones.push(this.centerXYRecCordinate[i]);
+                    }
+                }
+            }
+        }
+        console.log('zone_B_north_row_count_positions');
+        console.log(this.zone_B_north_row_count_positions);
+
+        this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
+            if (this.isSubArrayPresent(this.zones_A_positions, [value[0][0] - 30, value[0][1] - 10]) === false) {
+                if (this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[0][0] - 30, value[0][1] - 10]) === false) {
+                    this.zone_B_Edge_count_positions.push([value[0][0] - 30, value[0][1] - 10]);
+                    remaingZones.push(value[0]);
+                }
+            }
+            if (this.isSubArrayPresent(this.zones_A_positions, [value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]) === false) {
+                if (this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]) === false) {
+                    this.zone_B_Edge_count_positions.push([value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]);
+                    remaingZones.push(value[value.length - 1]);
+                }
+
+            }
+        });
+
+        for(let i : number = 0; i< this.centerXYRecCordinate.length;i++){
+            let nearestXPosition = this.centerXYRecCordinate[i][0] - 60;
+            let nearestRightXPosition = this.centerXYRecCordinate[i][0] + 60;
+            let nearestYPosition = this.centerXYRecCordinate[i][1] - 20 - this.gapY;
+            let isNerestLeftAvailable = this.isSubArrayPresent(this.centerXYRecCordinate,[nearestXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearesetRightAvailable=this.isSubArrayPresent(this.centerXYRecCordinate,[nearestRightXPosition,this.centerXYRecCordinate[i][1]]);
+            let isNearestUppAvailable =this.isSubArrayPresent(this.centerXYRecCordinate,[this.centerXYRecCordinate[i][0],nearestYPosition]);
+            if((!isNerestLeftAvailable && isNearestUppAvailable) || (!isNearesetRightAvailable && isNearestUppAvailable)){
+                if(!this.isSubArrayPresent(this.zones_A_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                    if(!this.isSubArrayPresent(this.zone_B_north_row_count_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                        if(!this.isSubArrayPresent(this.zone_B_Edge_count_positions, [this.centerXYRecCordinate[i][0] - 30,this.centerXYRecCordinate[i][1] - 10])){
+                            this.zone_B_Edge_count_positions.push([this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][1] - 10]);
+                            remaingZones.push(this.centerXYRecCordinate[i]);
+                        }
+                    }
+                }
+            }
+        }
+        console.log('zone_B_Edge_count_positions');
+        console.log(this.zone_B_Edge_count_positions);
+
+
+        if (minKey !== undefined && minKey !== null && maxKey !== undefined && maxKey !== null) {
+            this.centerxycordinatesMapInXPerspective.forEach((value, key) => {
+                if ((this.isSubArrayPresent(this.zones_A_positions, [value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]) === false) &&
+                    (this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]) === false) &&
+                    (this.isSubArrayPresent(this.zone_B_north_row_count_positions, [value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]) === false)) {
+                    this.zone_C_South_south_positions.push([value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]);
+                    remaingZones.push(value[value.length - 1]);
+                }
+            })
+        }
+
+        console.log('zone_C_South_south_positions');
+        console.log(this.zone_C_South_south_positions);
+
+        if (minKey !== undefined && minKey !== null && maxKey !== undefined && maxKey !== null) {
+            this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
+                if ((minKey && key > minKey) && (maxKey && key < maxKey)) {
+                    for (let i: number = 0; i < value.length; i++) {
+                        if ((i === 1) || (i === value.length - 2)) {
+                            if (i !== 0 && i !== value.length - 1) {
+                                if(!this.isSubArrayPresent(this.zones_A_positions, [value[i][0] - 30, value[i][1] - 10])){
+                                    if(!this.isSubArrayPresent(this.zone_B_north_row_count_positions, [value[i][0] - 30, value[i][1] - 10])){
+                                        if(!this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[i][0] - 30, value[i][1] - 10])){
+                                            if (this.isSubArrayPresent(this.zone_C_Interior_Panel_positions, [value[i][0] - 30, value[i][1] - 10]) === false) {
+                                                if (this.isSubArrayPresent(this.zone_C_South_south_positions, [value[i][0] - 30, value[i][1] - 10]) === false) {
+                                                    this.zone_C_Interior_Panel_positions.push([value[i][0] - 30, value[i][1] - 10]);
+                                                    remaingZones.push(value[i]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                               
+                            }
+                        }
+                    }
+                }
+            })
+        }
+
+        console.log('zone_C_Interior_Panel_positions');
+        console.log(this.zone_C_Interior_Panel_positions);
+
+        // let d: number[][] = this.findUncommonSubArrays(this.centerXYRecCordinate, remaingZones);
+        for(let i : number = 0;i< this.centerXYRecCordinate.length;i++){
+            let x = this.centerXYRecCordinate[i][0] - 30;
+            let y = this.centerXYRecCordinate[i][1] - 10;
+            if(!this.isSubArrayPresent(this.zones_A_positions, [x,y])){
+                if(!this.isSubArrayPresent(this.zone_B_north_row_count_positions, [x,y])){
+                    if(!this.isSubArrayPresent(this.zone_B_Edge_count_positions, [x,y])){
+                        if (this.isSubArrayPresent(this.zone_C_Interior_Panel_positions, [x,y]) === false) {
+                            if (this.isSubArrayPresent(this.zone_C_South_south_positions, [x,y]) === false) {
+                                this.zone_D_Interior_Panel_positions.push([x,y]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // for (let i: number = 0; i < d.length; i++) {
+        //     this.zone_D_Interior_Panel_positions.push([d[i][0] - 30, d[i][1] - 10])
+        //     // if ((this.centerXYRecCordinate[i][0] >= min_x + 120 && this.centerXYRecCordinate[i][0] <= max_x - 120) &&
+        //     //     ((this.centerXYRecCordinate[i][1] >= min_y + 20 && this.centerXYRecCordinate[i][1] <= max_y - 20))) {
+        //     //     this.zone_D_Interior_Panel_positions.push([this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][1] - 10])
+        //     // }
+        // }
+        console.log('zone_D_Interior_Panel_positions');
+        console.log(this.zone_D_Interior_Panel_positions);
+
+        return [this.zones_A_positions.length, this.zone_B_Edge_count_positions.length,
+        this.zone_B_north_row_count_positions.length, this.zone_C_South_south_positions.length,
+        this.zone_C_Interior_Panel_positions.length,
+        this.zone_D_Interior_Panel_positions.length];
+
+    }
+
+    arrayToString(arr: number[][]): string[] {
+        return arr.map(subArray => subArray.toString());
+    }
+
+    // Function to find the uncommon subarrays between arrays A and B
+    findUncommonSubArrays(arrA: number[][], arrB: number[][]): number[][] {
+        const uncommonSubArrays: number[][] = [];
+        const setA = new Set(this.arrayToString(arrA));
+        const setB = new Set(this.arrayToString(arrB));
+
+        for (const subArrayA of arrA) {
+            if (!setB.has(subArrayA.toString())) {
+                uncommonSubArrays.push(subArrayA);
+            }
+        }
+
+        for (const subArrayB of arrB) {
+            if (!setA.has(subArrayB.toString())) {
+                uncommonSubArrays.push(subArrayB);
+            }
+        }
+
+        return uncommonSubArrays;
+    }
+
+    // private printCorners() {
+    //     if(!this.centerXYRecCordinate.length){
+    //         return;
+    //     }
+    //     // Sort the coordinates based on their y-coordinate (row) in ascending order
+    //     const sortedCoordinates = this.centerXYRecCordinate.slice().sort((a, b) => a[1] - b[1]);
+
+    //     let currentRow = sortedCoordinates[0][1]; // The y-coordinate of the current row
+    //     let currentRowBoxes = [];
+
+    //     for (const [x, y] of sortedCoordinates) {
+    //       if (y !== currentRow) {
+    //         console.log("printA_");
+    //         // If the y-coordinate changes, it means we have moved to a new row
+    //         // Print the left and right corners of the current row
+    //         const leftCorner = currentRowBoxes.reduce((min, box) => (box[0] < min[0] ? box : min));
+    //         const rightCorner = currentRowBoxes.reduce((max, box) => (box[0] > max[0] ? box : max));
+    //         console.log(leftCorner, rightCorner);
+
+    //         // Update for the new row
+    //         currentRow = y;
+    //         currentRowBoxes = [];
+    //       }
+
+    //       currentRowBoxes.push([x, y]);
+    //     }
+
+    //     // Print the left and right corners of the last row
+    //     const leftCorner = currentRowBoxes.reduce((min, box) => (box[0] < min[0] ? box : min));
+    //     const rightCorner = currentRowBoxes.reduce((max, box) => (box[0] > max[0] ? box : max));
+
+    //     console.log(leftCorner, rightCorner);
+    // }
+
+    private resetZonesPositions() {
+        this.zones_A_positions = [];
+        this.zone_B_north_row_count_positions = [];
+        this.zone_B_Edge_count_positions = [];
+        this.zone_C_South_south_positions = [];
+        this.zone_C_Interior_Panel_positions = [];
+        this.zone_D_Interior_Panel_positions = [];
     }
 
     private fillRectangle(x: number, y: number) {
+        if (this.checkRectangleExistOrNot(x, y)) {
+            return;
+        }
         let fillCenterContainer = new Container();
         const blackedShapeGraphics = new Graphics();
         blackedShapeGraphics.beginFill(0x171717);
         blackedShapeGraphics.drawRect(x - 30, y - 10, 60, 20);
         blackedShapeGraphics.endFill();
+        // @ts-ignore
         blackedShapeGraphics.name = 'blackedShapeGraphics';
         fillCenterContainer.addChild(blackedShapeGraphics);
-        var outerMostShape = new Graphics();
-        outerMostShape.lineStyle(2, 0xffffff);
-        outerMostShape.drawRect(x - (0.5 * 58), y - (0.5 * 18), 58, 18);
-        outerMostShape.endFill();
-        outerMostShape.alpha = 0.3;
-        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
-        outerMostShape.name = 'outerMostShape';
-        fillCenterContainer.addChild(outerMostShape);
         const outerShape = new Graphics();
         outerShape.beginFill(0xffdb08);
         outerShape.drawRect(x - (0.5 * 60), y - (0.5 * 20), 60, 20);
@@ -207,9 +668,24 @@ export class ClickableContainer {
         rectangle.beginFill(0x0c0c0c);
         rectangle.drawRect(x - (0.5 * 40), y - (0.5 * 16), 40, 16);
         rectangle.endFill();
+        // @ts-ignore
         rectangle.name = 'middleBlackShape';
         fillCenterContainer.addChild(rectangle);
+        var outerMostShape = new Graphics();
+        outerMostShape.lineStyle(2, 0xffffff);
+        outerMostShape.drawRect(x - (0.5 * 58), y - (0.5 * 18), 58, 18);
+        outerMostShape.endFill();
+        outerMostShape.alpha = 0.3;
+        // this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
+        // @ts-ignore
+        outerMostShape.name = 'outerMostShape';
+        fillCenterContainer.addChild(outerMostShape);
+        // @ts-ignore
         fillCenterContainer.name = `clickedCenterContainer_${x}_${y}`;
+        this.x_array.push(x - 30, x + 30);
+        this.y_array.push(y - 10, y + 10);
+        this.rectangleCordinate.push([x - 30, x + 30, y - 10, y + 10]);
+        this.centerXYRecCordinate.push([x, y]);
         this.createRectangleAroundTheShape(x, y, 60, 20, fillCenterContainer);
         this.rectangleContanier.addChildAt(fillCenterContainer, 1);
         let changePositionButtonX = Math.min(...this.x_array) - 60;
@@ -217,20 +693,22 @@ export class ClickableContainer {
         this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
     }
 
-    private checkRectangleExistOrNot(x:number,y:number){
+    private checkRectangleExistOrNot(x: number, y: number) {
         for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            // @ts-ignore
             if (this.rectangleContanier.children[i].name === `clickedCenterContainer_${x}_${y}`) {
-                 return true;
+                return true;
             }
         }
         return false;
     }
 
     private checkAndRemove(x: number, y: number): boolean {
-        if(!this.deleteBoxEnabled){
+        if (!this.deleteBoxEnabled) {
             return false;
         }
         for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
+            // @ts-ignore
             if (this.rectangleContanier.children[i].name === `clickedCenterContainer_${x}_${y}`) {
                 this.rectangleContanier.removeChild(this.rectangleContanier.children[i]);
                 this.deleteElement(this.x_array, x);
@@ -257,6 +735,7 @@ export class ClickableContainer {
         this.y_array = [];
         this.rectangleCordinate = [];
         this.centerXYRecCordinate = [];
+        this.resetZonesPositions();
     }
 
     private deleteElement(array: number[], elements: number): void {
@@ -271,10 +750,9 @@ export class ClickableContainer {
         this.checkAndFilterRectangleCordinate(x - (0.5 * w), x - (0.5 * w) + 60, y - (1.5 * h), y - (1.5 * h) + 20);
         this.checkAndFilterRectangleCordinate(x + (0.5 * w), x + (0.5 * w) + 60, y - (0.5 * h), y - (0.5 * h) + 20);
         this.checkAndFilterRectangleCordinate(x - (0.5 * w), x - (0.5 * w), y + (0.5 * h), y + (0.5 * h) + 20);
-        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (1.5 * w) && item[1]=== x - (1.5 * w) + 20 && item[2]=== y - (0.5 * h) && item[3]=== y - (0.5 * h) + 30));
-        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (0.5 * w) && item[1]=== x - (0.5 * w) + 20 && item[2]=== y - (1.5 * h) && item[3]=== y - (1.5 * h) + 30));
-        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x + (0.5 * w) && item[1]=== x + (0.5 * w) + 20 && item[2]=== y - (0.5 * h) && item[3]=== y - (0.5 * h) + 30));
-        // this.rectangleCordinate = this.rectangleCordinate.filter(item => !(item[0]=== x - (0.5 * w) && item[1]=== x - (0.5 * w) + 20 && item[2]=== y + (0.5 * h) && item[3]=== y + (0.5 * h) + 30));
+    }
+
+    private createZonesTableWithColor(): void {
 
     }
 
@@ -329,6 +807,7 @@ export class ClickableContainer {
         surroundedRect.lineStyle(2, 0xffffff);
         surroundedRect.drawRect(x - (0.5 * w), y + (0.5 * h) + this.gapY, w, h)
         surroundedRect.endFill();
+        // @ts-ignore
         surroundedRect.name = 'surroundedRect';
         centerContainer.addChild(surroundedRect);
         this.rectangleCordinate.push([x - (0.5 * w), x - (0.5 * w) + 60, y + (0.5 * h) + this.gapY, y + (0.5 * h) + this.gapY + 20]);
@@ -360,28 +839,43 @@ export class ClickableContainer {
     // }
 
     private movementManagement(): void {
+        // @ts-ignore
         this.changePositionButton.interactive = true;
+        // @ts-ignore
         this.changePositionButton.buttonMode = true;
 
         let clickOffsetX = 0;
         let clickOffsetY = 0;
+        let pointerdown = false;
+        
 
-        this.changePositionButton.on("pointerdown", (event: any) => {
+        // @ts-ignore
+        this.changePositionButton.on("pointerdown", (event) => {
+            pointerdown = true
             clickOffsetX = event.data.global.x - this.rectangleContanier.x;
             clickOffsetY = event.data.global.y - this.rectangleContanier.y;
         });
 
-        this.changePositionButton.on("pointerup", () => {
+
+        // @ts-ignore
+        document.addEventListener("pointerup", () => {
+            pointerdown = false;
             clickOffsetX = 0;
             clickOffsetY = 0;
         });
 
-        this.changePositionButton.on("pointermove", (event: any) => {
+        // @ts-ignore
+        this.app.view.addEventListener("pointermove", (event) => {
             if (clickOffsetX !== 0 && clickOffsetY !== 0) {
-                this.rectangleContanier.x = event.data.global.x - clickOffsetX;
-                this.rectangleContanier.y = event.data.global.y - clickOffsetY;
+                if(pointerdown){
+                     // @ts-ignore
+                this.rectangleContanier.x = event.clientX - clickOffsetX;
+                // @ts-ignore
+                this.rectangleContanier.y = event.clientY - clickOffsetY;
+                }
             }
         });
+
     }
 
 
@@ -393,7 +887,7 @@ export class ClickableContainer {
         for (let i = 0; i < outputArray.length; i++) {
             let x_new = outputArray[i][0];
             let y_new = outputArray[i][1];
-            this.fillRectangle(x_new, y_new);
+            this.createRectangle(x_new, y_new);
         }
         let width = Math.max(...this.x_array) - Math.min(...this.x_array);
         let height = Math.max(...this.y_array) - Math.min(...this.y_array);
@@ -410,7 +904,9 @@ export class ClickableContainer {
         for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
             if ((this.rectangleContanier.children[i] as Container).children.length) {
                 for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
+                    // @ts-ignore
                     if (!((this.rectangleContanier.children[i] as Container).children[j].name === 'blackedShapeGraphics' ||
+                        // @ts-ignore
                         (this.rectangleContanier.children[i] as Container).children[j].name === 'outerMostShape')) {
                         // (this.rectangleContanier.children[i] as Container).children[j].filters  =  [color];
                         (this.rectangleContanier.children[i] as Container).children[j].visible = false;
@@ -477,7 +973,27 @@ export class ClickableContainer {
         return newOutArray;
     }
 
+    cloneImageContainer() {
+        let newContainer = new Container();
 
+        // Clone each child shape and add it to the new container
+        this.imagedContainer.children.forEach((child) => {
+            if (!(child instanceof Sprite)) {
+                // @ts-ignore
+                if ((child.name === 'bigFilledGraphic')) {
+                    let clonedChild = (child as any).clone();
+                    newContainer.addChild(clonedChild);
+                } else {
+                    // const clonedChild = (child as any).clone();
+                    // newContainer.addChild(clonedChild);
+                    const clonedChildContainer = this.cloneOfContainerType(child as any)
+                    newContainer.addChild(clonedChildContainer);
+                }
+            }
+        });
+
+        return newContainer;
+    }
 
     cloneContainer() {
         let newContainer = new Container();
@@ -485,6 +1001,7 @@ export class ClickableContainer {
         // Clone each child shape and add it to the new container
         this.rectangleContanier.children.forEach((child) => {
             if (!(child instanceof Sprite)) {
+                // @ts-ignore
                 if ((child.name === 'bigFilledGraphic')) {
                     let clonedChild = (child as any).clone();
                     newContainer.addChild(clonedChild);
@@ -506,6 +1023,7 @@ export class ClickableContainer {
         clonedContainer.position.copyFrom(containerAtLocal.position);
         clonedContainer.scale.copyFrom(containerAtLocal.scale);
         clonedContainer.rotation = containerAtLocal.rotation;
+        // @ts-ignore
         clonedContainer.name = containerAtLocal.name;
 
         // Clone the children elements of the original container
@@ -519,6 +1037,7 @@ export class ClickableContainer {
             // }
 
             clonedChild = (containerAtLocal.children[i] as Graphics).clone();
+            // @ts-ignore
             clonedChild.name = (containerAtLocal.children[i] as Graphics).name;
             clonedChild.visible = true;
             clonedChild.alpha = (containerAtLocal.children[i] as Graphics).alpha;

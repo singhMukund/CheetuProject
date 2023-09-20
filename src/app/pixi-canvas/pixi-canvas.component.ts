@@ -1,6 +1,11 @@
 import { Component, ElementRef, OnInit, asNativeElements } from '@angular/core';
-import { Application, Container, Filter, Graphics, Point, Sprite, Text, Texture, filters } from 'pixi.js';
+// import { Application, Container, Filter, Graphics, Point, Sprite, Text, Texture, filters } from 'pixi.js';
 import { ClickableContainer } from './ClickableContainer';
+import { ITABLEDATA } from './ITableData';
+import { Application, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { SharedDataService } from '../Service/Service';
+import { Router } from '@angular/router';
+import { ISingleContainerData } from './DataInterface';
 
 // import { Application } from 'pixijs';
 
@@ -9,6 +14,8 @@ import { ClickableContainer } from './ClickableContainer';
   templateUrl: './pixi-canvas.component.html',
   styleUrls: ['./pixi-canvas.component.css']
 })
+
+
 export class PixiCanvasComponent implements OnInit {
   private app!: Application;
   private rectangleContanier!: Container;
@@ -28,20 +35,54 @@ export class PixiCanvasComponent implements OnInit {
   private measurentContainer!: Container;
   private measurementXText!: Text;
   private measurementYText!: Text;
-  private startPoint: Point | null = null;
-  private startMouse: Point | null = null;
   private mouseDown: boolean = false;
   private currentX: number | undefined = -1;
   private currentY: number | undefined = -1;
+  inputValue: string = '';
 
-  zone_D_Interior_Panel : number = 10;
-  zone_C_South_south : number = 5;
-  zone_C_Interior_count : number = 5;
-  zone_B_north_row_count : number = 4;
-  zone_B_Edge_count : number = 3;
-  zone_A_count : number = 2
-  totalBlackBox : number= 0;
-  blackBoxCountForSelectedOne : number= 0;
+
+
+
+
+
+  zone_D_Interior_Panel: number = 10;
+  zone_C_South_south: number = 5;
+  zone_C_Interior_count: number = 5;
+  zone_B_north_row_count: number = 4;
+  zone_B_Edge_count: number = 3;
+  zone_A_count: number = 2
+  totalBlackBox: number = 0;
+  blackBoxCountForSelectedOne: number = 0;
+  private tableData: ITABLEDATA[] = [
+    {
+      firstCol: 'Zone Name ',
+      secondCol: 'Panel Count'
+    },
+    {
+      firstCol: 'Zone A Corner Panel',
+      secondCol: '10'
+    },
+    {
+      firstCol: 'Zone B,edge',
+      secondCol: '10'
+    },
+    {
+      firstCol: 'Zone B,North row',
+      secondCol: '10'
+    },
+    {
+      firstCol: 'Zone C, South row',
+      secondCol: '10'
+    },
+    {
+      firstCol: 'Zone C, Interior',
+      secondCol: '10'
+    },
+    {
+      firstCol: 'Zone D, Interior Panel',
+      secondCol: '10'
+    }
+  ]
 
   // private ballImage! : Sprite;
   // private moveRight = true;
@@ -50,7 +91,9 @@ export class PixiCanvasComponent implements OnInit {
   // private moveUp = false;
 
 
-  constructor(private el: ElementRef) { }
+  constructor(private el: ElementRef, private sharedDataService: SharedDataService, private router: Router) {
+
+  }
 
   ngOnInit(): void {
     this.app = new Application({
@@ -58,10 +101,10 @@ export class PixiCanvasComponent implements OnInit {
       height: 920,
       backgroundColor: 0x808080,
     });
-
     this.el.nativeElement.appendChild(this.app.view);
-    (globalThis as any).__PIXI_APP__ = this.app;
     this.app.renderer.resize(window.innerWidth, window.innerHeight);
+    (globalThis as any).__PIXI_APP__ = this.app;
+
     this.rectangleContanier = new Container();
     this.new_big_rectangle = new Container();
     this.buttonContainer = new Container();
@@ -74,28 +117,131 @@ export class PixiCanvasComponent implements OnInit {
     this.rectangleOnMouse.endFill();
 
     this.app.stage.addChild(this.rectangleOnMouse);
-    this.app.view.addEventListener('mousemove', (event) => {
-      !this.stopMouseClick && this.rectangleOnMouse.position.set(event.x, event.y);
+    // @ts-ignore
+    this.app.view.addEventListener('mousemove', (offset: { x: any; y: any; }) => {
+      !this.stopMouseClick && this.rectangleOnMouse.position.set(offset.x, offset.y);
       this.stopMouseClick && (this.rectangleOnMouse.visible = false);
     });
     this.createMeasurent();
     // this.createButtonAndSetEvent();
     this.subscribeEvent();
     this.subscribeMouseMovementEventForDragEvent();
+    this.getDataFromBackEnd(localStorage.getItem('box_Value')!);
     // this.ballAnimation();
   }
 
-  onDeleteButtonClick(event : MouseEvent) :void{
+  getValue() {
     for (const [key, value] of this.clickableContainerMap) {
-      if(value.getEnabled()){
+      if (value.getEnabled()) {
+        value.setGapY(Number(this.inputValue));
+        // this.clickableContainerMap.delete(key);
+        // this.deleteSelectedTable(key);
+        // return;
+      }
+    }
+    console.log('Input Value:', this.inputValue);
+  }
+
+  onDeleteButtonClick(event: MouseEvent): void {
+    for (const [key, value] of this.clickableContainerMap) {
+      if (value.getEnabled()) {
         value.destroy();
         this.clickableContainerMap.delete(key);
+        this.deleteSelectedTable(key);
         return;
       }
     }
   }
 
-  updateTotalBlackBox() :void{
+  saveDataForBackEnd() {
+    let outputStringArray: string = "";
+    for (const [key, value] of this.clickableContainerMap) {
+      let outputStr = "";
+      outputStr = `${value.getConatiner().x},${value.getConatiner().y}`;
+      for (let i: number = 0; i < value.centerXYRecCordinate.length; i++) {
+        outputStr = outputStr.length ? (outputStr + ',' + value.centerXYRecCordinate[i][0]) : value.centerXYRecCordinate[i][0].toString();
+        outputStr = outputStr + ',' + value.centerXYRecCordinate[i][1];
+      }
+      outputStringArray = outputStringArray.length ? (outputStringArray + ">" + outputStr) : outputStr  ;
+    }
+    // return outputStringArray;
+    localStorage.setItem("box_Value",outputStringArray);
+    console.log('BackEndData' + outputStringArray);
+  }
+
+  getDataFromBackEnd(outputStringArray:string) :void{
+    //  outputStringArray = '0,0,286,160,346,160,406,160,406,195,346,195,286,195,286,230,346,230,346,265,406,265>0,400,286,160,346,160,406,160,406,195,346,195,286,195,286,230,346,230,346,265,406,265,406,300';
+     let stringArray = outputStringArray.split('>');
+     let data : number[][][] = [];
+     for(let i : number = 0;i< stringArray.length;i++){
+      let numberArray = stringArray[i].split(',');
+      let dataArray = [];
+       for(let j : number=0;j<numberArray.length;j= j+2){
+        let singleDataArray = [];
+        singleDataArray.push(Number(numberArray[j]));
+        singleDataArray.push(Number(numberArray[j+1]));
+        dataArray.push(singleDataArray);
+       }
+       data.push(dataArray);
+     }
+     console.log(data);
+     this.showSavedContainer(data);
+    //  let container_y = [0,400]
+     
+  }
+
+  private showSavedContainer(data : number[][][]) : void{
+    if(!data){
+      return;
+    }
+    for(let i:number = 0;i<data.length;i++){
+      this.enableDisableAllContainer(false);
+      this.createClickableContainer();
+      this.hideAllContainer();
+      for(let j:number = 1;j<data[i].length;j++){
+        let value = this.clickableContainerMap.get(this.highlightedKey);
+        if (value) {
+          value.clickOnRectangle(data[i][j][0], data[i][j][1]);
+        }
+      }
+      let value = this.clickableContainerMap.get(this.highlightedKey);
+      if(value){
+        this.updatePanelCount(value.zonesCount(), true, this.highlightedKey);
+        value.getConatiner().x = data[i][0][0];
+        value.getConatiner().y = data[i][0][1];
+      }
+     }
+  }
+
+  sendData() {
+    // this.saveDataForBackEnd(); 
+    const data: any[] = [];
+    for (const [key, value] of this.clickableContainerMap) {
+      const singleData = [];
+      singleData.push(value.getImageContainer());
+      let minX = Math.min(...value.getXYArray()[0]);
+      let maxX = Math.max(...value.getXYArray()[0]);
+      let minY = Math.min(...value.getXYArray()[1]);
+      let maxY = Math.max(...value.getXYArray()[1]);
+      singleData.push(minX,maxX,minY,maxY);
+      data.push(singleData);
+    }
+    this.sharedDataService.sendData(data);
+    this.router.navigate(['/zoneImage']);
+
+  }
+
+  private deleteSelectedTable(key: string): void {
+    const selectedTable = document.getElementById(key);
+    if (selectedTable) {
+      const parentNode = selectedTable.parentNode;
+      if (parentNode) {
+        parentNode.removeChild(selectedTable);
+      }
+    }
+  }
+
+  updateTotalBlackBox(): void {
     let totalChildren = 0;
     for (const [key, value] of this.clickableContainerMap) {
       totalChildren += value.getConatiner().children.length - 1;
@@ -103,13 +249,13 @@ export class PixiCanvasComponent implements OnInit {
     this.totalBlackBox = totalChildren;
   }
 
-  updateBlackBoxCountForSelectedOne() :void{
+  updateBlackBoxCountForSelectedOne(): void {
     let totalChildren = 0;
     for (const [key, value] of this.clickableContainerMap) {
-      if(value.getEnabled()){
+      if (value.getEnabled()) {
         totalChildren += value.getConatiner().children.length - 1;
         break;
-      }  
+      }
     }
     this.blackBoxCountForSelectedOne = totalChildren;
   }
@@ -152,20 +298,23 @@ export class PixiCanvasComponent implements OnInit {
   }
 
   private subscribeMouseMovementEventForDragEvent(): void {
+    // @ts-ignore
     this.app.view.addEventListener('mousedown', this.onMouseDown.bind(this));
+    // @ts-ignore
     this.app.view.addEventListener('mousemove', this.onMouseMove.bind(this));
-    this.app.view.addEventListener('mouseup', this.onMouseUp.bind(this));
+    // @ts-ignore
+    document.addEventListener('mouseup', this.onMouseUp.bind(this));
   }
- 
-  private onMouseDown(event:MouseEvent) :void{
-    this.mouseDown= true;
+
+  private onMouseDown(event: MouseEvent): void {
+    this.mouseDown = true;
     for (const [key, value] of this.clickableContainerMap) {
       value.deleteBoxEnabled = false;
     }
     for (const [key, value] of this.clickableContainerMap) {
-      if(value.getEnabled()){
-        let xy = value.CheckCordinateInRectangle(event.offsetX,event.offsetY);
-        if(xy?.length){
+      if (value.getEnabled()) {
+        let xy = value.CheckCordinateInRectangle(event.offsetX, event.offsetY);
+        if (xy?.length) {
           this.mouseDown = true;
           this.currentX = xy[0] - 30;
           this.currentY = xy[1] - 10;
@@ -174,76 +323,26 @@ export class PixiCanvasComponent implements OnInit {
     }
   }
 
-  // private ballAnimation() :void{
-  //   const ballImageTexture = Texture.from('../../assets/Ball_image.png');
-  //   this.ballImage = new Sprite(ballImageTexture);
-  //   this.ballImage.name = 'ballImage';
-  //   this.ballImage.setTransform(100,100,0.25,0.25);
-  //   this.app.stage.addChild(this.ballImage);
-  //   setTimeout(()=>{
-  //     this.playBallAnimation(true);
-  //   },3000);
-  // }
-
-  // private playBallAnimation(isPlay:boolean) {
-  //   let x1 = 100;
-  //   let x2 = 800;
-  //   let y1 = 100;
-  //   let y2 = 450;
-  //   isPlay = true;
-  //    if(!isPlay){
-  //     return;
-  //    }
-  //    if (this.moveRight) {
-  //     this.ballImage.x += 0.5;
-  //     if (this.ballImage.x >= x2) {
-  //       this.ballImage.x = x2;
-  //       this.moveRight = false;
-  //       this.moveDown = true;
-  //     }
-  //   } else if (this.moveDown) {
-  //     this.ballImage.y += 0.5;
-  //     if (this.ballImage.y >= y2) {
-  //       this.ballImage.y = y2;
-  //       this.moveDown = false;
-  //       this.moveLeft = true;
-  //     }
-  //   } else if (this.moveLeft) {
-  //     this.ballImage.x -= 0.5;
-  //     if (this.ballImage.x <= x1) {
-  //       this.ballImage.x = x1;
-  //       this.moveLeft = false;
-  //       this.moveUp = true;
-  //     }
-  //   } else if (this.moveUp) {
-  //     this.ballImage.y -= 0.5;
-  //     if (this.ballImage.y <= y1) {
-  //       this.ballImage.y = y1;
-  //       this.moveUp = false;
-  //       this.moveRight = true;
-  //     }
-  //   }
-  //    setTimeout(()=>{
-  //     this.playBallAnimation(isPlay);
-  //    },16.66)
-  // }
-
-  private onMouseMove(event:MouseEvent) :void{
-    if(this.mouseDown){
-      if(this.currentX !== undefined && this.currentY !== undefined){
-        if(event.offsetX > this.currentX + 60 || event.offsetY > this.currentY + 20){
+  private onMouseMove(event: MouseEvent): void {
+    if (this.mouseDown) {
+      if (this.currentX !== undefined && this.currentY !== undefined) {
+        if (event.offsetX > this.currentX + 60 || event.offsetY > this.currentY + 20 ||
+          event.offsetX > this.currentX - 60 || event.offsetY > this.currentY - 20) {
           for (const [key, value] of this.clickableContainerMap) {
-            value.getEnabled() && value.clickOnRectangle(event.offsetX, event.offsetY);
-            this.measurentContainer.visible = false;
-            break
+            if (value.getEnabled()) {
+              value.getEnabled() && value.clickOnRectangle(event.offsetX, event.offsetY);
+              this.updatePanelCount(value.zonesCount(), false, key);
+              this.measurentContainer.visible = false;
+              break
+            }
           }
         }
       }
-      
+
     }
   }
 
-  private onMouseUp(event:MouseEvent) :void{
+  private onMouseUp(event: MouseEvent): void {
     this.mouseDown = false;
     this.currentX = undefined;
     this.currentY = undefined;
@@ -262,59 +361,127 @@ export class PixiCanvasComponent implements OnInit {
     if (this.clickableContainerMap.get(key)?.getConatiner()) {
       let conatiner = this.clickableContainerMap.get(key)?.getConatiner();
       if (conatiner) {
+        // @ts-ignore
         conatiner.interactive = true
+        // @ts-ignore
         conatiner.buttonMode = true;
+        // @ts-ignore
         conatiner.off("pointerdown");
+        // @ts-ignore
         conatiner.on("pointerdown", this.pointerClick.bind(this));
       }
     }
   }
 
   private subscribeEvent(): void {
-    this.app.view.addEventListener('click', (event) => {
+    // @ts-ignore
+    this.app.view.addEventListener('click', (event: MouseEvent) => {
       if (this.clickableContainerMap.size) {
         for (const [key, value] of this.clickableContainerMap) {
           if (this.clickableContainerMap.size === 1 && value.getcenterXYRecCordinate().length === 0) {
             this.clickableContainerMap.clear();
             this.createClickableContainer();
             this.clickableContainerMap.get(this.highlightedKey)?.clickOnRectangle(event.offsetX, event.offsetY);
+            this.updatePanelCount(value.zonesCount(), false, key);
             break
           } else {
-            if(value.getEnabled()){
+            if (value.getEnabled()) {
               value.clickOnRectangle(event.offsetX, event.offsetY);
-              this.updatePanelCount(value.zonesCount());
-            } 
+              this.updatePanelCount(value.zonesCount(), false, key);
+            }
             this.measurentContainer.visible = false;
           }
         }
       } else {
         this.createClickableContainer();
-        this.clickableContainerMap.get(this.highlightedKey)?.clickOnRectangle(event.offsetX, event.offsetY);
+        let value = this.clickableContainerMap.get(this.highlightedKey);
+        if (value) {
+          value.clickOnRectangle(event.offsetX, event.offsetY);
+          this.updatePanelCount(value.zonesCount(), true, this.highlightedKey);
+        }
+
       }
       this.stopMouseClick = true;
       this.updateTotalBlackBox();
     });
   }
 
-  onFillRectangleClick(event :MouseEvent): void {
+  onFillRectangleClick(event: MouseEvent): void {
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
         value.onButtonDown();
-        this.updatePanelCount(value.zonesCount());
+        this.updatePanelCount(value.zonesCount(), false, key);
       }
     }
   }
 
-  private updatePanelCount(zonesCount : number[]) :void{
-    this.zone_A_count = zonesCount[0];
-    this.zone_B_Edge_count = zonesCount[1] > 0 ? zonesCount[1] : 0;
-    this.zone_B_north_row_count = zonesCount[2] > 0? zonesCount[2] :0;
-    this.zone_C_Interior_count = zonesCount[4] > 0? zonesCount[4]: 0;
-    this.zone_C_South_south = zonesCount[3] > 0 ? zonesCount[3]: 0;
-    this.zone_D_Interior_Panel = zonesCount[5] > 0 ? zonesCount[5]: 0;
+  private updatePanelCount(zonesCount: number[], create: boolean, id: string): void {
+    this.updateTableData(zonesCount)
+    if (create) {
+      this.createTable(this.tableData, id);
+    }
+    else {
+      this.updateCellValueById(id);
+    }
   }
 
-  onMeasurementCalculation(event : MouseEvent): void {
+  createTable(tableData: { firstCol: string; secondCol: string; }[], id: string) {
+    this.updateBlackBoxCountForSelectedOne();
+    this.resetBorderColorOfTable();
+    const tableElement = document.createElement("table");
+    tableElement.id = id; // Set the ID of the table
+    tableElement.style.border = "1px solid red";
+    for (let i = 0; i < tableData.length; i++) {
+      const row = document.createElement("tr");
+      let cell = document.createElement(i === 0 ? "th" : "td");
+      cell.textContent = tableData[i].firstCol;
+      row.appendChild(cell);
+      cell = document.createElement(i === 0 ? "th" : "td");
+      cell.textContent = tableData[i].secondCol;
+      row.appendChild(cell);
+      tableElement.appendChild(row);
+    }
+    document.body.appendChild(tableElement);
+  }
+
+  private updateTableData(zonesCount: number[]): void {
+    for (let i: number = 1; i < this.tableData.length; i++) {
+      this.tableData[i].secondCol = zonesCount[i - 1] > 0 ? `${zonesCount[i - 1]}` : '0';
+    }
+  }
+
+  updateCellValueById(tableId: string) {
+    this.resetBorderColorOfTable();
+    const table = document.getElementById(tableId);
+    if (table !== null) {
+      table.style.border = "1px solid red";
+      for (let i = 0; i < this.tableData.length + 1; i++) {
+        if (table instanceof HTMLTableElement) {
+          const targetCell = table.rows[i].cells[1];
+          if (targetCell) {
+            if (i === this.tableData.length) {
+              targetCell.textContent = this.blackBoxCountForSelectedOne.toString();
+            } else {
+              targetCell.textContent = this.tableData[i].secondCol;
+            }
+          }
+
+        }
+      }
+    }
+  }
+
+  private resetBorderColorOfTable(): void {
+    this.clickableContainerMap.forEach((value, key) => {
+      const table = document.getElementById(key);
+      if (table !== null) {
+        table.style.border = "";
+      }
+    });
+  }
+
+
+  onMeasurementCalculation(event: MouseEvent): void {
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
         let xy = value.getXYArray();
@@ -324,6 +491,11 @@ export class PixiCanvasComponent implements OnInit {
         this.measurementXText.text = `X : ${((Math.max(...xy[0]) - Math.min(...xy[0])) / 1152).toFixed(2)} ft`;
         this.measurementYText.text = `Y : ${((Math.max(...xy[1]) - Math.min(...xy[1])) / 1152).toFixed(2)} ft`;
       }
+    }
+  }
+  onCreateImageButtonClick(event: MouseEvent): void {
+    for (const [key, value] of this.clickableContainerMap) {
+      value.createImageContainer();
     }
   }
 
@@ -365,7 +537,7 @@ export class PixiCanvasComponent implements OnInit {
     }
   }
 
-  onCloneButtonClicked(event : MouseEvent): void {
+  onCloneButtonClicked(event: MouseEvent): void {
     let highlightedKey: string = this.checkEnabledConatiner();
     const clonedContainer = this.clickableContainerMap.get(highlightedKey)?.cloneContainer();
     let xy = this.clickableContainerMap.get(highlightedKey)?.returnXY();
@@ -379,6 +551,7 @@ export class PixiCanvasComponent implements OnInit {
     this.clickableContainerMap.set(key, container);
     this.hideAllContainer();
     this.clickableContainerMap.get(key)?.showAll();
+    this.updatePanelCount(container.zonesCount(), true, key);
     this.clickableContainerMap.get(key)?.setEnabled(true);
     this.clickableContainerMap.get(key)?.setXY(xy ? xy[0] : 400, xy ? xy[1] : 300);
     this.clickableContainerMap.get(key)?.setRectangleCordinate(recCordinate ? recCordinate : []);
@@ -388,9 +561,13 @@ export class PixiCanvasComponent implements OnInit {
     if (this.clickableContainerMap.get(key)?.getConatiner()) {
       let conatiner = this.clickableContainerMap.get(key)?.getConatiner();
       if (conatiner) {
-        conatiner.interactive = true
+        // @ts-ignore
+        conatiner.interactive = true;
+        // @ts-ignore
         conatiner.buttonMode = true;
+        // @ts-ignore
         conatiner.off("pointerdown");
+        // @ts-ignore
         conatiner.on("pointerdown", this.pointerClick.bind(this));
       }
     }

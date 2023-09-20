@@ -1,36 +1,45 @@
-<button class="button button1" (click)="onFillRectangleClick($event)">Fill Rectangle</button>
-<button class="button button2" (click)="onCloneButtonClicked($event)">Make Clone</button>
-<button class="button button1" (click)="onMeasurementCalculation($event)">Calculate Measurement</button>
-<button class="button button2" (click)="onDeleteButtonClick($event)">Delete Selected One</button>
-<h4>Total Black Box : {{totalBlackBox}}</h4>
+<div>
+    <button class="button button1" (click)="onFillRectangleClick($event)">Fill Rectangle</button>
+    <button class="button button2" (click)="onCloneButtonClicked($event)">Make Clone</button>
+    <button class="button button1" (click)="onMeasurementCalculation($event)">Calculate Measurement</button>
+    <button class="button button2" (click)="onDeleteButtonClick($event)">Delete Selected One</button>
+    <button class="button button2" (click)="onCreateImageButtonClick($event)">Create Image</button>
+    <button class="button button2" (click)="sendData()">Send Data</button>
+    <input type="text" [(ngModel)]="inputValue" placeholder="Enter something">
+    <button (click)="getValue()">Get Value</button>
 
-<table>
-    <tr>
-        <th>Zone Name</th>
-        <th>Panel Count</th>
-    </tr>
-    <tr>
-        <td>Zone A Corner Panel</td>
-        <td>{{zone_A_count}}</td>
-    </tr>
-    <tr>
-        <td>Zone B,edge</td>
-        <td>{{zone_B_Edge_count}}</td>
-    </tr>
-    <tr>
-        <td>Zone B,North row</td>
-        <td>{{zone_B_north_row_count}}</td>
-    </tr>
-    <tr>
-        <td>Zone C, Interior</td>
-        <td>{{zone_C_Interior_count}}</td>
-    </tr>
-    <tr>
-        <td>Zone C, South row</td>
-        <td>{{zone_C_South_south}}</td>
-    </tr>
-    <tr>
-        <td>Zone D, Interior Panel</td>
-        <td>{{zone_D_Interior_Panel}}</td>
-    </tr>
-</table>
+    <h4>Total Black Box : {{totalBlackBox}}</h4>
+    <div></div>
+    <!-- <table></table> -->
+    <!-- <table>
+        <tr>
+            <th>Zone Name</th>
+            <th>Panel Count</th>
+        </tr>
+        <tr>
+            <td>Zone A Corner Panel</td>
+            <td>{{zone_A_count}}</td>
+        </tr>
+        <tr>
+            <td>Zone B,edge</td>
+            <td>{{zone_B_Edge_count}}</td>
+        </tr>
+        <tr>
+            <td>Zone B,North row</td>
+            <td>{{zone_B_north_row_count}}</td>
+        </tr>
+        <tr>
+            <td>Zone C, Interior</td>
+            <td>{{zone_C_Interior_count}}</td>
+        </tr>
+        <tr>
+            <td>Zone C, South row</td>
+            <td>{{zone_C_South_south}}</td>
+        </tr>
+        <tr>
+            <td>Zone D, Interior Panel</td>
+            <td>{{zone_D_Interior_Panel}}</td>
+        </tr>
+    </table> 
+    <canvas id="aaasis"></canvas> -->
+</div>
