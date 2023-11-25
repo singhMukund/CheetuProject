@@ -1,9 +1,9 @@
 const path = require('path');
 
+
 module.exports = {
   entry: './index.js', // Entry point for your web app
   // ... other webpack configuration options ...
-
   plugins: [
     // ... other plugins ...
 

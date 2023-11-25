@@ -39,6 +39,9 @@ export class PixiCanvasComponent implements OnInit {
   private currentX: number | undefined = -1;
   private currentY: number | undefined = -1;
   inputValue: string = '';
+  private width: number = 60;
+  private height: number = 20;
+  private currentScale: number = 1;
 
 
 
@@ -102,9 +105,11 @@ export class PixiCanvasComponent implements OnInit {
       backgroundColor: 0x808080,
     });
     this.el.nativeElement.appendChild(this.app.view);
+    // this.app.stage.pivot.set(window.innerWidth * 0.5, window.innerHeight * 0.5)
     this.app.renderer.resize(window.innerWidth, window.innerHeight);
     (globalThis as any).__PIXI_APP__ = this.app;
-
+    this.app.stage.pivot.set((window.innerWidth) * 0.5, (window.innerHeight) * 0.5);
+    this.app.stage.position.set(this.app.stage.pivot.x, this.app.stage.pivot.y);
     this.rectangleContanier = new Container();
     this.new_big_rectangle = new Container();
     this.buttonContainer = new Container();
@@ -126,31 +131,235 @@ export class PixiCanvasComponent implements OnInit {
     // this.createButtonAndSetEvent();
     this.subscribeEvent();
     this.subscribeMouseMovementEventForDragEvent();
-    this.getDataFromBackEnd(localStorage.getItem('box_Value')!);
+    // this.getDataFromBackEnd(localStorage.getItem('box_Value')!);
     // this.ballAnimation();
+  }
+
+  setScale(scale: number): void {
+    this.width = 60 * scale;
+    this.height = 20 * scale;
+  }
+
+  ///Issue is that gap is constant through out
+
+  private toFixed(num : number) : number{
+    return (Number((num).toFixed(1)));
+  } 
+
+  zoomIn(): void {
+    if ((Number((this.currentScale - 0.1).toFixed(2))) <= 0.3) {
+      // this.currentScale = Number((this.currentScale - 0.3).toFixed(2)); 
+      return;
+    }else{
+      // this.currentScale = 1;
+      this.currentScale = Number((this.currentScale - 0.1).toFixed(2)); 
+
+    }
+    let initialWH = [this.app.stage.width,this.app.stage.height];
+    this.app.stage.scale.set(this.currentScale);
+    let finalWidth = [this.app.stage.width,this.app.stage.height];
+    if(this.currentScale <= 1){
+      this.app.renderer.resize(window.innerWidth , window.innerHeight );
+    }else{
+      this.app.renderer.resize(window.innerWidth * this.currentScale, window.innerHeight * this.currentScale);
+    }
+    // this.app.stage.position.set(-((finalWidth[1] - initialWH[1]) * 1),-((finalWidth[0] - initialWH[0]) * 1));
+    // this.el.nativeElement.style.setTransform(`scale(${this.currentScale})`);
+    // for (const [key, value] of this.clickableContainerMap) {
+    //   let data = value.getcenterXYRecCordinate();
+    //   if (data) {
+    //     let isEnable = value.getEnabled();
+    //     const gapY = value.getGapY();
+    //     const initialRecPosition = value.getInitialContainerPositon();
+    //     let widthHeight = value.getWidthHeight();
+    //     if(60 * this.currentScale < 0 || 20 * this.currentScale < 0){
+    //       return;
+    //     }
+    //     value.setScale(this.currentScale);
+    //     let newWidthHeight = value.getWidthHeight();
+    //     let gapDifference = [(newWidthHeight[0] - widthHeight[0]), (newWidthHeight[1] - widthHeight[1])];
+    //     const minX = this.findMinX(data);
+    //     const minY = this.findMinY(data);
+    //     data = this.updateDataOnUpdatedWidth(data, this.toFixed(minX), this.toFixed(gapDifference[0]));
+    //     data = this.updateDataOnUpdatedHeight(data, this.toFixed(minY), this.toFixed(gapDifference[1]), this.toFixed(gapY));
+    //     if (initialRecPosition[0] === value.getConatiner().x || initialRecPosition[1] === value.getConatiner().y) {
+    //       data = this.updateDataOnInitialValue(data, initialRecPosition);
+    //     }
+    //     // data = this.updateDataOnGap(data, gapDifference); 
+    //     data.sort((a, b) => a[1] - b[1]);
+    //     value.resetBoxes();
+    //     console.log(value);
+    //     this.setScale(this.currentScale);
+    //     for (let i: number = 0; i < data.length; i++) {
+    //       value.clickOnRectangle(data[i][0]/this.app.stage.scale.x, data[i][1]/this.app.stage.scale.y);
+    //       this.updatePanelCount(value.zonesCount(), false, key);
+    //     }
+    //     if (!isEnable) {
+    //       value.hideAll();
+    //     }
+    //   }
+    // }
+  }
+
+  zoomOut(): void {
+    
+    if ((Number((this.currentScale + 0.3).toFixed(2))) > 3) {
+      return;
+    }
+    this.currentScale =  Number((this.currentScale + 0.3).toFixed(2));
+    // this.app.stage.position.set(this.app.screen.width / 2, this.app.screen.height / 2);
+
+    // this.app.stage.pivot.set(this.app.stage.width / 2, this.app.stage.height/2);
+    // @ts-ignore
+    // this.app.stage.anchor.set(0.5);
+    let initialWH = [this.app.stage.width,this.app.stage.height];
+    this.app.stage.scale.set(this.currentScale,this.currentScale);
+    let finalWidth = [this.app.stage.width,this.app.stage.height];
+    this.app.renderer.resize(window.innerWidth * this.currentScale, window.innerHeight * this.currentScale);
+    // this.app.stage.position.set((initialWH[0]-finalWidth[0]),((initialWH[1]-finalWidth[1])));
+    // this.resetImage(); 
+     // Calculate new x and y to center the app
+  // const newX = (window.innerWidth - this.app.screen.width) / 2;
+  // const newY = (window.innerHeight - this.app.screen.height) / 2;
+
+  // Set the new position
+  // if(this.app.view.style){
+  //   this.app.view.style.left = newX + 'px';
+  //   this.app.view.style.top = newY + 'px';
+  // }
+ 
+   
+  }
+
+  private resetImage():void{
+    for (const [key, value] of this.clickableContainerMap) {
+      let data = value.getcenterXYRecCordinate();
+      if (data) {
+        let isEnable = value.getEnabled();
+        const gapY = value.getGapY();
+        const initialRecPosition = value.getInitialContainerPositon();
+        let widthHeight = value.getWidthHeight();
+        if(60 * this.currentScale < 0 || 20 * this.currentScale < 0){
+          return;
+        }
+        value.setScale(this.currentScale);
+        let newWidthHeight = value.getWidthHeight();
+        let gapDifference = [(newWidthHeight[0] - widthHeight[0]), (newWidthHeight[1] - widthHeight[1])];
+        const minX = this.findMinX(data);
+        const minY = this.findMinY(data);
+        data = this.updateDataOnUpdatedWidth(data, this.toFixed(minX), this.toFixed(gapDifference[0]));
+        data = this.updateDataOnUpdatedHeight(data, this.toFixed(minY), this.toFixed(gapDifference[1]), this.toFixed(gapY));
+        if (initialRecPosition[0] === value.getConatiner().x || initialRecPosition[1] === value.getConatiner().y) {
+          data = this.updateDataOnInitialValue(data, initialRecPosition);
+        }
+        // data = this.updateDataOnGap(data, gapDifference); 
+        data.sort((a, b) => a[1] - b[1]);
+        value.resetBoxes();
+        console.log(value);
+        this.setScale(this.currentScale);
+        for (let i: number = 0; i < data.length; i++) {
+          value.clickOnRectangle(data[i][0], data[i][1]);
+          this.updatePanelCount(value.zonesCount(), false, key);
+        }
+        if (!isEnable) {
+          value.hideAll();
+        }
+      }
+    }
+  }
+
+  private updateDataOnInitialValue(data: number[][], initialRecPosition: number[]): number[][] {
+    for (let i: number = 0; i < data.length; i++) {
+      data[i][0] = data[i][0] + initialRecPosition[0];
+      data[i][1] = data[i][1] + initialRecPosition[1];
+    }
+    return data;
   }
 
   getValue() {
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
+        const oldGapY = value.getGapY();
+        const gapDifference = Number(this.inputValue) - oldGapY;
+        const data = value.getcenterXYRecCordinate();
+        data.sort((a, b) => a[1] - b[1]);
+        const minV = this.findMinY(data);
+        const newData = this.updateData(data, minV, gapDifference, oldGapY);
+        value.resetBoxes();
         value.setGapY(Number(this.inputValue));
-        // this.clickableContainerMap.delete(key);
-        // this.deleteSelectedTable(key);
-        // return;
+        console.log(value);
+        for (let i: number = 0; i < newData.length; i++) {
+          value.clickOnRectangle(newData[i][0]/this.app.stage.scale.x, newData[i][1]/this.app.stage.scale.y);
+          this.updatePanelCount(value.zonesCount(), false, key);
+          // this.measurentContainer.visible = false;
+        }
       }
     }
-    console.log('Input Value:', this.inputValue);
+  }
+
+  private findMinY(data: any): number {
+    let minY: number = data[0][1];
+    for (const subarray of data) {
+      if (subarray[1] < minY) {
+        minY = subarray[1];
+      }
+    }
+    return minY;
+  }
+
+  private findMinX(data: any): number {
+    let minY: number = data[0][0];
+    for (const subarray of data) {
+      if (subarray[0] < minY) {
+        minY = subarray[0];
+      }
+    }
+    return minY;
+  }
+
+  private updateDataOnUpdatedWidth(data: number[][], minV: number, difference: number): number[][] {
+    for (let i: number = 0; i < data.length; i++) {
+      const changeInY = ((data[i][0] - minV) / (this.width)) * difference;
+      data[i][0] = data[i][0] + this.toFixed(changeInY);
+    }
+    return data;
+  }
+
+  private updateDataOnUpdatedHeight(data: number[][], minV: number, difference: number, gapY: number): number[][] {
+    for (let i: number = 0; i < data.length; i++) {
+      const changeInY = ((data[i][1] - minV) / (gapY + this.height)) * difference;
+      data[i][1] = data[i][1] + changeInY
+    }
+    data.sort((a, b) => a[1] - b[1]);
+    return data;
+  }
+
+
+
+  private updateData(data: number[][], minV: number, difference: number, oldGap: number): number[][] {
+    for (let i: number = 0; i < data.length; i++) {
+      const changeInY = (data[i][1] - minV) / (oldGap + this.height) * difference;
+      data[i][1] = data[i][1] + this.toFixed(changeInY);
+    }
+    return data;
   }
 
   onDeleteButtonClick(event: MouseEvent): void {
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
         value.destroy();
-        this.clickableContainerMap.delete(key);
+        // this.clickableContainerMap.delete(key);
         this.deleteSelectedTable(key);
         return;
       }
     }
+    // this.enableDisableAllContainer(false);
+    // this.hideAllContainer();
+    // for (const [key, value] of this.clickableContainerMap) {
+    //   value.setEnabled(true);
+    //   value.showAll();
+    //   return;
+    // }
   }
 
   saveDataForBackEnd() {
@@ -162,55 +371,54 @@ export class PixiCanvasComponent implements OnInit {
         outputStr = outputStr.length ? (outputStr + ',' + value.centerXYRecCordinate[i][0]) : value.centerXYRecCordinate[i][0].toString();
         outputStr = outputStr + ',' + value.centerXYRecCordinate[i][1];
       }
-      outputStringArray = outputStringArray.length ? (outputStringArray + ">" + outputStr) : outputStr  ;
+      outputStringArray = outputStringArray.length ? (outputStringArray + ">" + outputStr) : outputStr;
     }
     // return outputStringArray;
-    localStorage.setItem("box_Value",outputStringArray);
-    console.log('BackEndData' + outputStringArray);
+    localStorage.setItem("box_Value", outputStringArray);
+    // console.log('BackEndData' + outputStringArray);
   }
 
-  getDataFromBackEnd(outputStringArray:string) :void{
-    //  outputStringArray = '0,0,286,160,346,160,406,160,406,195,346,195,286,195,286,230,346,230,346,265,406,265>0,400,286,160,346,160,406,160,406,195,346,195,286,195,286,230,346,230,346,265,406,265,406,300';
-     let stringArray = outputStringArray.split('>');
-     let data : number[][][] = [];
-     for(let i : number = 0;i< stringArray.length;i++){
+  getDataFromBackEnd(outputStringArray: string): void {
+    let stringArray = outputStringArray.split('>');
+    let data: number[][][] = [];
+    for (let i: number = 0; i < stringArray.length; i++) {
       let numberArray = stringArray[i].split(',');
       let dataArray = [];
-       for(let j : number=0;j<numberArray.length;j= j+2){
+      for (let j: number = 0; j < numberArray.length; j = j + 2) {
         let singleDataArray = [];
         singleDataArray.push(Number(numberArray[j]));
-        singleDataArray.push(Number(numberArray[j+1]));
+        singleDataArray.push(Number(numberArray[j + 1]));
         dataArray.push(singleDataArray);
-       }
-       data.push(dataArray);
-     }
-     console.log(data);
-     this.showSavedContainer(data);
+      }
+      data.push(dataArray);
+    }
+    // console.log(data);
+    this.showSavedContainer(data);
     //  let container_y = [0,400]
-     
+
   }
 
-  private showSavedContainer(data : number[][][]) : void{
-    if(!data){
+  private showSavedContainer(data: number[][][]): void {
+    if (!data) {
       return;
     }
-    for(let i:number = 0;i<data.length;i++){
+    for (let i: number = 0; i < data.length; i++) {
       this.enableDisableAllContainer(false);
       this.createClickableContainer();
       this.hideAllContainer();
-      for(let j:number = 1;j<data[i].length;j++){
+      for (let j: number = 1; j < data[i].length; j++) {
         let value = this.clickableContainerMap.get(this.highlightedKey);
         if (value) {
           value.clickOnRectangle(data[i][j][0], data[i][j][1]);
         }
       }
       let value = this.clickableContainerMap.get(this.highlightedKey);
-      if(value){
+      if (value) {
         this.updatePanelCount(value.zonesCount(), true, this.highlightedKey);
         value.getConatiner().x = data[i][0][0];
         value.getConatiner().y = data[i][0][1];
       }
-     }
+    }
   }
 
   sendData() {
@@ -223,7 +431,10 @@ export class PixiCanvasComponent implements OnInit {
       let maxX = Math.max(...value.getXYArray()[0]);
       let minY = Math.min(...value.getXYArray()[1]);
       let maxY = Math.max(...value.getXYArray()[1]);
-      singleData.push(minX,maxX,minY,maxY);
+      let minMaxArray = [minX, maxX, minY, maxY];
+      singleData.push(minMaxArray);
+      singleData.push(value.getcenterXYRecCordinate());
+      singleData.push(value.getZonePositions());
       data.push(singleData);
     }
     this.sharedDataService.sendData(data);
@@ -313,11 +524,11 @@ export class PixiCanvasComponent implements OnInit {
     }
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
-        let xy = value.CheckCordinateInRectangle(event.offsetX, event.offsetY);
+        let xy = value.CheckCordinateInRectangle(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
         if (xy?.length) {
           this.mouseDown = true;
-          this.currentX = xy[0] - 30;
-          this.currentY = xy[1] - 10;
+          this.currentX = xy[0] - (this.width * 0.5);
+          this.currentY = xy[1] - (this.height * 0.5);
         }
       }
     }
@@ -326,11 +537,13 @@ export class PixiCanvasComponent implements OnInit {
   private onMouseMove(event: MouseEvent): void {
     if (this.mouseDown) {
       if (this.currentX !== undefined && this.currentY !== undefined) {
-        if (event.offsetX > this.currentX + 60 || event.offsetY > this.currentY + 20 ||
-          event.offsetX > this.currentX - 60 || event.offsetY > this.currentY - 20) {
+        if (event.offsetX/this.app.stage.scale.x > this.currentX + this.width || event.offsetY/this.app.stage.scale.y > this.currentY + this.height ||
+          event.offsetX/this.app.stage.scale.x > this.currentX - this.width || event.offsetY/this.app.stage.scale.y > this.currentY - this.height) {
           for (const [key, value] of this.clickableContainerMap) {
             if (value.getEnabled()) {
-              value.getEnabled() && value.clickOnRectangle(event.offsetX, event.offsetY);
+              value.getEnabled() && value.clickOnRectangle(event.offsetX
+                , event.offsetY
+                );
               this.updatePanelCount(value.zonesCount(), false, key);
               this.measurentContainer.visible = false;
               break
@@ -455,7 +668,7 @@ export class PixiCanvasComponent implements OnInit {
     const table = document.getElementById(tableId);
     if (table !== null) {
       table.style.border = "1px solid red";
-      for (let i = 0; i < this.tableData.length + 1; i++) {
+      for (let i = 0; i < this.tableData.length; i++) {
         if (table instanceof HTMLTableElement) {
           const targetCell = table.rows[i].cells[1];
           if (targetCell) {
@@ -539,27 +752,41 @@ export class PixiCanvasComponent implements OnInit {
 
   onCloneButtonClicked(event: MouseEvent): void {
     let highlightedKey: string = this.checkEnabledConatiner();
-    const clonedContainer = this.clickableContainerMap.get(highlightedKey)?.cloneContainer();
-    let xy = this.clickableContainerMap.get(highlightedKey)?.returnXY();
-    let xyArray = this.clickableContainerMap.get(highlightedKey)?.getXYArray();
-    let recCordinate = this.clickableContainerMap.get(highlightedKey)?.getRectangleCordinate();
-    let centerRecCordinate = this.clickableContainerMap.get(highlightedKey)?.getcenterXYRecCordinate();
+    const highlightedObj = this.clickableContainerMap.get(highlightedKey);
+    const clonedContainer = highlightedObj?.cloneContainer();
+    let xy = highlightedObj?.returnXY();
+    let xyArray = highlightedObj?.getXYArray(true);
+    let recCordinate = highlightedObj?.getRectangleCordinate(true);
+    let centerRecCordinate = highlightedObj?.getcenterXYRecCordinate(true);
+    const centerxycordinatesMapInXPerspective = new Map(highlightedObj?.centerxycordinatesMapInXPerspective);
+    const centerxycordinatesMapInYPerspective = new Map(highlightedObj?.centerxycordinatesMapInYPerspective);
     let key: string = `clickableContainer${this.clickableContainerMap.size}`;
     let container: ClickableContainer = new ClickableContainer(this.app, key, clonedContainer);
     this.enableDisableAllContainer(false);
+    container.setScale(this.currentScale);
+    this.setScale(this.currentScale);
     this.highlightedKey = key;
     this.clickableContainerMap.set(key, container);
     this.hideAllContainer();
-    this.clickableContainerMap.get(key)?.showAll();
-    this.updatePanelCount(container.zonesCount(), true, key);
-    this.clickableContainerMap.get(key)?.setEnabled(true);
-    this.clickableContainerMap.get(key)?.setXY(xy ? xy[0] : 400, xy ? xy[1] : 300);
-    this.clickableContainerMap.get(key)?.setRectangleCordinate(recCordinate ? recCordinate : []);
-    this.clickableContainerMap.get(key)?.setcenterXYRecCordinate(centerRecCordinate ? centerRecCordinate : []);
-    this.clickableContainerMap.get(key)?.setXYArray(xyArray ? xyArray[0] : [], xyArray ? xyArray[1] : []);
-    this.clickableContainerMap.get(key)?.changeButtonPosition();
-    if (this.clickableContainerMap.get(key)?.getConatiner()) {
-      let conatiner = this.clickableContainerMap.get(key)?.getConatiner();
+    const clonedObj = this.clickableContainerMap.get(key);
+    if (clonedObj) {
+      clonedObj.showAll();
+      clonedObj.setEnabled(true);
+      if (xy) {
+        clonedObj.setXY(xy[0], xy[1]);
+        clonedObj.setInitialContainerPosition(xy[0], xy[1]);
+      }
+      clonedObj.centerxycordinatesMapInYPerspective = centerxycordinatesMapInYPerspective;
+      clonedObj.centerxycordinatesMapInXPerspective = centerxycordinatesMapInXPerspective;
+      clonedObj.setRectangleCordinate(recCordinate ? recCordinate : []);
+      clonedObj.setcenterXYRecCordinate(centerRecCordinate ? centerRecCordinate : []);
+      clonedObj.setXYArray(xyArray ? xyArray[0] : [], xyArray ? xyArray[1] : []);
+      clonedObj.changeButtonPosition();
+      clonedObj.setZonesPositions();
+      this.updatePanelCount(container.zonesCount(), true, key);
+    }
+    if (clonedObj?.getConatiner()) {
+      let conatiner = clonedObj?.getConatiner();
       if (conatiner) {
         // @ts-ignore
         conatiner.interactive = true;
@@ -571,7 +798,5 @@ export class PixiCanvasComponent implements OnInit {
         conatiner.on("pointerdown", this.pointerClick.bind(this));
       }
     }
-
-
   }
 }

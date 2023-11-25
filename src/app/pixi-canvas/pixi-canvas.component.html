@@ -6,6 +6,9 @@
     <button class="button button2" (click)="onCreateImageButtonClick($event)">Create Image</button>
     <button class="button button2" (click)="sendData()">Send Data</button>
     <input type="text" [(ngModel)]="inputValue" placeholder="Enter something">
+    <button class="button button2" (click)="zoomIn()">Zoom In</button>
+    <button class="button button2" (click)="zoomOut()">Zoom Out</button>
+
     <button (click)="getValue()">Get Value</button>
 
     <h4>Total Black Box : {{totalBlackBox}}</h4>

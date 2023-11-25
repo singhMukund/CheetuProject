@@ -47,15 +47,10 @@ export class ClickableContainer {
     private centerXPosition: number[] = [];
     private centerYPosition: number[] = [];
     private virtualyRowAndCol: number[][][] = [];
-    private width: number = 60;
-    private height: number = 20;
-    private initialContainerXPosition: number = 0;
-    private initialContainerYPosition: number = 0;
-    private isTopBarrier: boolean = false;
-    private isDownBarrier: boolean = false;
-    private isLeftBarrier: boolean = true;
-    private isRightBarrier: boolean = false;
-
+    private width : number = 60;
+    private height : number = 20;
+    private initialContainerXPosition : number = 0;
+    private initialContainerYPosition : number = 0;
 
 
 
@@ -79,18 +74,16 @@ export class ClickableContainer {
         this.movementManagement();
     }
 
-
-
-    setInitialContainerPosition(x: number, y: number) {
+    setInitialContainerPosition(x : number,y : number){
         x !== this.initialContainerXPosition && (this.initialContainerXPosition = x);
         y !== this.initialContainerYPosition && (this.initialContainerYPosition = y);
     }
 
-    getInitialContainerPositon(): number[] {
+    getInitialContainerPositon() : number[]{
         return [this.initialContainerXPosition, this.initialContainerYPosition];
     }
 
-    getGapY(): number {
+    getGapY() :number{
         return this.gapY;
     }
 
@@ -98,11 +91,7 @@ export class ClickableContainer {
         this.gapY = y;
     }
 
-    getWidthHeight(): number[] {
-        return [this.width, this.height];
-    }
-
-    setScale(scale: number): void {
+    setScale(scale : number) : void{
         this.width = 60 * scale;
         this.height = 20 * scale;
     }
@@ -116,7 +105,7 @@ export class ClickableContainer {
         this.y_array = value2;
     }
 
-    private findMinMax(data: any): void {
+    private findMinMax(data : any): void {
         let minX = Number.POSITIVE_INFINITY;
         let minY = Number.POSITIVE_INFINITY;
         let maxX = Number.NEGATIVE_INFINITY;
@@ -161,12 +150,7 @@ export class ClickableContainer {
         }
     }
 
-    public getXYArray(newArray?: boolean): [number[], number[]] {
-        if (newArray) {
-            const new_x_array = [...this.x_array];
-            const new_y_array = [...this.y_array];
-            return [new_x_array, new_y_array]
-        }
+    public getXYArray(): [number[], number[]] {
         return [this.x_array, this.y_array];
     }
 
@@ -178,19 +162,11 @@ export class ClickableContainer {
         this.centerXYRecCordinate = value;
     }
 
-    public getRectangleCordinate(new_array?: true): number[][] {
-        if (new_array) {
-            const new_rectangleCordinate = this.rectangleCordinate.map(row => [...row]);
-            return new_rectangleCordinate;
-        }
+    public getRectangleCordinate(): number[][] {
         return this.rectangleCordinate;
     }
 
-    public getcenterXYRecCordinate(newArray?: boolean): number[][] {
-        if (newArray) {
-            const newCenterXYRecCordinate = this.centerXYRecCordinate.map(row => [...row]);
-            return newCenterXYRecCordinate;
-        }
+    public getcenterXYRecCordinate(): number[][] {
         return this.centerXYRecCordinate;
     }
 
@@ -261,7 +237,7 @@ export class ClickableContainer {
         }
     }
 
-    createRectangle(x: number, y: number) {
+    private createRectangle(x: number, y: number) {
         // this.stopMouseClick = true;
         if (this.checkAndRemove(x, y)) {
             return;
@@ -273,12 +249,20 @@ export class ClickableContainer {
         // this.centerRecCordinate.push([[x - 10 , x + 10],[y - 15, y + 15]]);
         const blackedShapeGraphics = new Graphics();
         blackedShapeGraphics.beginFill(0x171717);
-        blackedShapeGraphics.drawRect(x - (this.width * 0.5), y - (this.height * 0.5), this.width, this.height);
+        blackedShapeGraphics.drawRect(x - (this.width * 0.5), y - (this.height  * 0.5), this.width, this.height);
         blackedShapeGraphics.endFill();
         // @ts-ignore
         blackedShapeGraphics.name = 'blackedShapeGraphics';
         centerContainer.addChild(blackedShapeGraphics);
-
+        var outerMostShape = new Graphics();
+        outerMostShape.lineStyle(2, 0xffffff);
+        outerMostShape.drawRect(x - (0.5 * (this.percenatgeValue(this.width,95))),
+                              (y - (0.5 * (this.percenatgeValue(this.height,90)))), this.percenatgeValue(this.width,95), this.percenatgeValue(this.height,90));
+        outerMostShape.alpha = 0.3;
+        outerMostShape.endFill();
+        // @ts-ignore
+        outerMostShape.name = 'outerMostShape'
+        centerContainer.addChild(outerMostShape);
         const outerShape = new Graphics();
         outerShape.beginFill(0xffdb08);
         outerShape.drawRect(x - (0.5 * this.width), y - (0.5 * this.height), this.width, this.height);
@@ -286,18 +270,9 @@ export class ClickableContainer {
         // @ts-ignore
         outerShape.name = 'outerShape';
         centerContainer.addChild(outerShape);
-        var outerMostShape = new Graphics();
-        outerMostShape.lineStyle(2, 0xffffff);
-        outerMostShape.drawRect((x - (0.5 * this.width)),
-            (y - (0.5 * this.height)), this.width, this.height);
-        outerMostShape.alpha = 1;
-        outerMostShape.endFill();
-        // @ts-ignore
-        outerMostShape.name = 'outerMostShape'
-        centerContainer.addChild(outerMostShape);
         const rectangle = new Graphics();
         rectangle.beginFill(0x0c0c0c);
-        rectangle.drawRect(x - (0.5 * this.percenatgeValue(this.width, 67)), y - (0.5 * (this.percenatgeValue(this.height, 80))), this.percenatgeValue(this.width, 67), this.percenatgeValue(this.height, 80));
+        rectangle.drawRect(x - (0.5 *  this.percenatgeValue(this.width,67)), y - (0.5 * (this.percenatgeValue(this.height,80))), this.percenatgeValue(this.width,67), this.percenatgeValue(this.height,80));
         rectangle.endFill();
         // @ts-ignore
         rectangle.name = 'middleBlackShape';
@@ -338,34 +313,20 @@ export class ClickableContainer {
         // @ts-ignore
         centerContainer.name = `clickedCenterContainer_${x}_${y}`;
         this.rectangleContanier.addChildAt(centerContainer, 1);
-        // this.rectangleContanier.anchor
         let changePositionButtonX = Math.min(...this.x_array) - (this.width + 10);
         let changePositionButtonY = Math.max(...this.y_array) + this.height;
         this.changePositionButton.setTransform(changePositionButtonX, changePositionButtonY, 0.05, 0.05);
-        // this.changePositionButton.anchor.set()
-        // if(this.app.stage.scale.x <= 1){
-        //     this.app.stage.pivot.set((window.innerWidth * this.app.stage.scale.x) * 0.5, (window.innerHeight * this.app.stage.scale.x) * 0.5);
-        // }else{
-            
-        // }
-        // this.app.stage.pivot.set((window.innerWidth) * 0.5, (window.innerHeight) * 0.5);
-        // this.app.stage.position.set(this.app.stage.pivot.x, this.app.stage.pivot.y);
         // console.log("Total Row" + this.centerYPosition.length);
-        
     }
 
-    private percenatgeValue(num: number, percenatge: number): number {
-        return ((num * percenatge) / 100);
+    private percenatgeValue(num : number, percenatge : number) : number{
+      return ((num * percenatge) / 100);
     }
 
     // public getCenterYPosition() :
 
     public zonesCount(): number[] {
-        this.setZonesPositions();
-        return [this.zones_A_positions.length, this.zone_B_Edge_count_positions.length,
-        this.zone_B_north_row_count_positions.length, this.zone_C_South_south_positions.length,
-        this.zone_C_Interior_Panel_positions.length,
-        this.zone_D_Interior_Panel_positions.length];
+        return this.setZonesPositions();
     }
 
     getImageContainer(): Container {
@@ -492,7 +453,7 @@ export class ClickableContainer {
         return maxKey;
     }
 
-    setZonesPositions(): void {
+    private setZonesPositions(): number[] {
         let remaingZones: number[][] = [];
         // console.clear()
         this.resetZonesPositions();
@@ -501,14 +462,14 @@ export class ClickableContainer {
                 let yRowValue = this.centerxycordinatesMapInXPerspective.get(value[0][0]);
                 if (yRowValue) {
                     if (this.areArraysEqual(value[0], yRowValue[0])) {
-                        this.zones_A_positions.push([value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]);
+                        this.zones_A_positions.push([value[0][0] - 30, value[0][1] - 10]);
                         remaingZones.push(value[0]);
                     }
                     if (!this.areArraysEqual(value[0], value[value.length - 1])) {
                         yRowValue = this.centerxycordinatesMapInXPerspective.get(value[value.length - 1][0]);
                         if (yRowValue) {
                             if (this.areArraysEqual(value[value.length - 1], yRowValue[0])) {
-                                this.zones_A_positions.push([value[value.length - 1][0] - (this.width * 0.5), value[value.length - 1][1] - (this.height * 0.5)]);
+                                this.zones_A_positions.push([value[value.length - 1][0] - 30, value[value.length - 1][1] - 10]);
                                 remaingZones.push(value[value.length - 1]);
                             }
                         }
@@ -540,7 +501,7 @@ export class ClickableContainer {
 
         this.centerxycordinatesMapInXPerspective.forEach((value, key) => {
             if (this.isSubArrayPresent(this.zones_A_positions, [value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]) === false) {
-                if (this.isSubArrayPresent(this.zone_B_north_row_count_positions, [value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]) === false) {
+                if (this.isSubArrayPresent(this.zone_B_north_row_count_positions, [value[0][0] - 30, value[0][1] - (this.height * 0.5)]) === false) {
                     this.zone_B_north_row_count_positions.push([value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]);
                     remaingZones.push(value[0]);
                 }
@@ -566,9 +527,9 @@ export class ClickableContainer {
         // console.log(this.zone_B_north_row_count_positions);
 
         this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
-            if (this.isSubArrayPresent(this.zones_A_positions, [value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]) === false) {
-                if (this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]) === false) {
-                    this.zone_B_Edge_count_positions.push([value[0][0] - (this.width * 0.5), value[0][1] - (this.height * 0.5)]);
+            if (this.isSubArrayPresent(this.zones_A_positions, [value[0][0] - (this.width * 0.5), value[0][1] - 10]) === false) {
+                if (this.isSubArrayPresent(this.zone_B_Edge_count_positions, [value[0][0] - (this.width * 0.5), value[0][1] - 10]) === false) {
+                    this.zone_B_Edge_count_positions.push([value[0][0] - (this.width * 0.5), value[0][1] - 10]);
                     remaingZones.push(value[0]);
                 }
             }
@@ -614,8 +575,8 @@ export class ClickableContainer {
             })
         }
 
-
-
+       
+        
 
         if (minKey !== undefined && minKey !== null && maxKey !== undefined && maxKey !== null) {
             this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
@@ -643,6 +604,10 @@ export class ClickableContainer {
             })
         }
 
+        // console.log('zone_C_Interior_Panel_positions');
+        // console.log(this.zone_C_Interior_Panel_positions);
+
+        // let d: number[][] = this.findUncommonSubArrays(this.centerXYRecCordinate, remaingZones);
         for (let i: number = 0; i < this.centerXYRecCordinate.length; i++) {
             let x = this.centerXYRecCordinate[i][0] - (this.width * 0.5);
             let y = this.centerXYRecCordinate[i][1] - (this.height * 0.5);
@@ -658,164 +623,22 @@ export class ClickableContainer {
                 }
             }
         }
-        this.filterWindBarrier();
-    }
+        // for (let i: number = 0; i < d.length; i++) {
+        //     this.zone_D_Interior_Panel_positions.push([d[i][0] - 30, d[i][1] - 10])
+        //     // if ((this.centerXYRecCordinate[i][0] >= min_x + 120 && this.centerXYRecCordinate[i][0] <= max_x - 120) &&
+        //     //     ((this.centerXYRecCordinate[i][1] >= min_y + 20 && this.centerXYRecCordinate[i][1] <= max_y - 20))) {
+        //     //     this.zone_D_Interior_Panel_positions.push([this.centerXYRecCordinate[i][0] - 30, this.centerXYRecCordinate[i][1] - 10])
+        //     // }
+        // }
+        // console.log('zone_D_Interior_Panel_positions');
+        // console.log(this.zone_D_Interior_Panel_positions);
 
-    private filterWindBarrier(): void {
-        if (this.isTopBarrier && !this.isLeftBarrier && !this.isRightBarrier) {
-            this.zones_A_positions.forEach((value) => {
-                this.zone_B_Edge_count_positions.push(value);
-            })
-            this.zones_A_positions = [];
-        } else if (this.isTopBarrier && this.isLeftBarrier && this.isRightBarrier) {
-            this.zones_A_positions.forEach((value) => {
-                this.zone_C_Interior_Panel_positions.push(value);
-            })
-            this.zones_A_positions = [];
-        } else if (this.isTopBarrier && !this.isLeftBarrier && this.isRightBarrier) {
-            this.zones_A_positions.forEach((value) => {
-                if (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 1.5), value[1] + (this.height * 0.5)])) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                } else {
-                    this.zone_B_Edge_count_positions.push(value);
-                }
-
-            })
-            this.zones_A_positions = [];
-        } else if (this.isTopBarrier && this.isLeftBarrier && !this.isRightBarrier) {
-            this.zones_A_positions.forEach((value) => {
-                if (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 1.5), value[1] + (this.height * 0.5)])) {
-                    this.zone_B_Edge_count_positions.push(value);
-                } else {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                }
-
-            })
-            this.zones_A_positions = [];
-        }else if(!this.isTopBarrier && !this.isLeftBarrier && this.isRightBarrier){
-            for(let i : number = 0;i<this.zones_A_positions.length;i++){
-                const value = this.zones_A_positions[i];
-                if (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 1.5), value[1] + (this.height * 0.5)])) {
-                    this.zone_B_north_row_count_positions.push(value);
-                    this.zones_A_positions.splice(i,1);
-                    i--;
-                }
-            }
-        }else if(!this.isTopBarrier && !this.isRightBarrier&& this.isLeftBarrier){
-            for(let i : number = 0;i<this.zones_A_positions.length;i++){
-                const value = this.zones_A_positions[i];
-                if (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * 0.5), value[1] + (this.height * 0.5)])) {
-                    this.zone_B_north_row_count_positions.push(value);
-                    this.zones_A_positions.splice(i,1);
-                    i--;
-                }
-            }
-        }
-
-        if (this.isTopBarrier) {
-            this.zone_B_north_row_count_positions.forEach((value) => {
-                if ((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * 2.5), value[1] + (this.height * 0.5)]))
-                    || (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 2.5), value[1] + (this.height * 0.5)]))) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                } else {
-                    this.zone_D_Interior_Panel_positions.push(value);
-                }
-
-            })
-            this.zone_B_north_row_count_positions = [];
-        }
-
-        if (this.isDownBarrier) {
-            this.zone_C_South_south_positions.forEach((value) => {
-                if ((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * 1.5), value[1] + (this.height * 0.5)]))
-                    || (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 2.5), value[1] + (this.height * 0.5)]))) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                } else {
-                    this.zone_D_Interior_Panel_positions.push(value);
-                }
-
-            })
-            this.zone_C_South_south_positions = [];
-        }
-        if (this.isLeftBarrier && this.isRightBarrier) {
-            let newArray = this.zone_C_Interior_Panel_positions.map(row => [...row]);
-            this.zone_C_Interior_Panel_positions = [];
-            this.zone_C_Interior_Panel_positions = this.zone_B_Edge_count_positions.map(row => [...row]);
-            this.zone_B_Edge_count_positions = [];
-            newArray.forEach((value) => {
-                if ((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * 0.5), value[1] + (this.height * 0.5)]))
-                    || (!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 1.5), value[1] + (this.height * 0.5)]))) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                } else {
-                    this.zone_D_Interior_Panel_positions.push(value);
-                }
-                //  this.zone_D_Interior_Panel_positions.push(value);
-            })
-            newArray = [];
-        }
-        if (this.isLeftBarrier && !this.isRightBarrier) {
-            let newArray: number[][] = [];
-            this.zone_B_Edge_count_positions.forEach((value) => {
-                if ((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * 0.5), value[1] + (this.height * 0.5)]))) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                }else{
-                    newArray.push(value)
-                }
-                //  this.zone_D_Interior_Panel_positions.push(value);
-            })
-            this.zone_B_Edge_count_positions = [];
-            this.zone_B_Edge_count_positions = newArray;
-        }
-        if (!this.isLeftBarrier && this.isRightBarrier) {
-            let newArray: number[][] = [];
-            this.zone_B_Edge_count_positions.forEach((value) => {
-                if ((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * 1.5), value[1] + (this.height * 0.5)]))) {
-                    this.zone_C_Interior_Panel_positions.push(value);
-                }else{
-                    newArray.push(value)
-                }
-                //  this.zone_D_Interior_Panel_positions.push(value);
-            })
-            this.zone_B_Edge_count_positions = [];
-            this.zone_B_Edge_count_positions = newArray;
-        }
-        const arrayToBeDeleted: number[][] = [];
-        this.zone_C_Interior_Panel_positions.forEach((value) => {
-            let leftmrgin = 1.5;
-            let rightmargin = 2.5;
-            if(!this.isLeftBarrier && this.isRightBarrier){
-                leftmrgin = 1.5;
-                rightmargin = 1.5;
-            }else if(this.isLeftBarrier && !this.isRightBarrier){
-                rightmargin = 2.5;
-                leftmrgin = 0.5;
-            }
-            if (!(this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] - (this.width * leftmrgin), value[1] + (this.height * 0.5)]))) {
-                // this.zone_D_Interior_Panel_positions.push(value);
-                arrayToBeDeleted.push(value)
-            }else if((!this.isSubArrayPresent(this.centerXYRecCordinate, [value[0] + (this.width * rightmargin), value[1] + (this.height * 0.5)]))){
-                arrayToBeDeleted.push(value)
-            }else{
-                this.zone_D_Interior_Panel_positions.push(value);
-            }
-        });
-        this.zone_C_Interior_Panel_positions = [];
-        this.zone_C_Interior_Panel_positions = arrayToBeDeleted.map(row => [...row]);
-        // const arrayToBeDeleted: number[][] = [];
-        // this.zone_C_Interior_Panel_positions.forEach((value) => {
-        //     arrayToBeDeleted.push([value[0] + (0.5 * this.width),value[1]]);
-        // })
-
-        
-
+        return [this.zones_A_positions.length, this.zone_B_Edge_count_positions.length,
+        this.zone_B_north_row_count_positions.length, this.zone_C_South_south_positions.length,
+        this.zone_C_Interior_Panel_positions.length,
+        this.zone_D_Interior_Panel_positions.length];
 
     }
-
-    containsArray(array: number[][], target: number[]): boolean {
-        return array.some(arr => this.areArraysEqual(arr, target));
-    }
-
-
 
     getZonePositions(): any {
         let zonePositons: zonePositons = {
@@ -995,14 +818,14 @@ export class ClickableContainer {
         this.setEnabled(false);
     }
 
-    resetBoxes(): void {
-        while (this.rectangleContanier.children.length !== 1) {
-            this.rectangleContanier.children.forEach((child, index) => {
-                if (!(child instanceof Sprite)) {
+    resetBoxes() :void{
+        while(this.rectangleContanier.children.length !== 1){
+            this.rectangleContanier.children.forEach((child,index) => {
+                if(!(child instanceof Sprite)){
                     this.rectangleContanier.removeChildAt(index);
                 }
             })
-        }
+        }       
         this.x_array = [];
         this.y_array = [];
         this.rectangleCordinate = [];
@@ -1160,7 +983,6 @@ export class ClickableContainer {
         let x = Math.min(...this.x_array);
         let y = Math.min(...this.y_array);
         let outputArray = this.convertArray(this.centerXYRecCordinate);
-        this.setInitialContainerPosition(this.rectangleContanier.x, this.rectangleContanier.y);
         for (let i = 0; i < outputArray.length; i++) {
             let x_new = outputArray[i][0];
             let y_new = outputArray[i][1];
@@ -1182,16 +1004,11 @@ export class ClickableContainer {
             if ((this.rectangleContanier.children[i] as Container).children.length) {
                 for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
                     // @ts-ignore
-                    if (!((this.rectangleContanier.children[i] as Container).children[j].name === 'blackedShapeGraphics')) {
-
-                        // (this.rectangleContanier.children[i] as Container).children[j].filters  =  [color];
+                    if (!((this.rectangleContanier.children[i] as Container).children[j].name === 'blackedShapeGraphics' ||
                         // @ts-ignore
-                        if ((this.rectangleContanier.children[i] as Container).children[j].name === 'outerMostShape') {
-                            (this.rectangleContanier.children[i] as Container).children[j].alpha = 0.3;
-                        } else {
-                            (this.rectangleContanier.children[i] as Container).children[j].visible = false;
-                        }
-
+                        (this.rectangleContanier.children[i] as Container).children[j].name === 'outerMostShape')) {
+                        // (this.rectangleContanier.children[i] as Container).children[j].filters  =  [color];
+                        (this.rectangleContanier.children[i] as Container).children[j].visible = false;
                     }
                 }
             }
@@ -1205,7 +1022,6 @@ export class ClickableContainer {
             if ((this.rectangleContanier.children[i] as Container).children.length) {
                 for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
                     (this.rectangleContanier.children[i] as Container).children[j].visible = true;
-                    (this.rectangleContanier.children[i] as Container).children[j].alpha = 1;
                 }
             }
         }
