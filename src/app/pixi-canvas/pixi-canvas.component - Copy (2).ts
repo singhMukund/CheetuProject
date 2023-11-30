@@ -133,35 +133,35 @@ export class PixiCanvasComponent implements OnInit {
 
   ///Issue is that gap is constant through out
 
-  private toFixed(num: number): number {
+  private toFixed(num : number) : number{
     return (Number((num).toFixed(1)));
-  }
+  } 
 
   zoomIn(): void {
     if ((Number((this.currentScale - 0.1).toFixed(2))) <= 0.3) {
       // this.currentScale = Number((this.currentScale - 0.3).toFixed(2)); 
       return;
-    } else {
+    }else{
       // this.currentScale = 1;
-      this.currentScale = Number((this.currentScale - 0.1).toFixed(2));
+      this.currentScale = Number((this.currentScale - 0.1).toFixed(2)); 
 
     }
-    let initialWH = [this.app.stage.width, this.app.stage.height];
+    let initialWH = [this.app.stage.width,this.app.stage.height];
     // this.app.stage.scale.set(this.currentScale);
-    let finalWidth = [this.app.stage.width, this.app.stage.height];
-    if (this.currentScale <= 1) {
-      this.app.renderer.resize(window.innerWidth, window.innerHeight);
-    } else {
+    let finalWidth = [this.app.stage.width,this.app.stage.height];
+    if(this.currentScale <= 1){
+      this.app.renderer.resize(window.innerWidth , window.innerHeight );
+    }else{
       this.app.renderer.resize(window.innerWidth * this.currentScale, window.innerHeight * this.currentScale);
     }
 
     for (const [key, value] of this.clickableContainerMap) {
-      let initialWH = [value.getConatiner().width, value.getConatiner().height];
-      value.getConatiner().scale.set(this.currentScale);
-      let finalWidth = [value.getConatiner().width, value.getConatiner().height];
-      let newX = value.getConatiner().x - ((finalWidth[0] - initialWH[0]) * 0.25);
-      let newY = value.getConatiner().y - ((finalWidth[1] - initialWH[1]) * 0.25);
-      value.getConatiner().position.set(newX, newY);
+        let minx = this.findMinX(value.getcenterXYRecCordinate());
+        let miny = this.findMinY(value.getcenterXYRecCordinate());
+        value.getConatiner().scale.set(this.currentScale);
+        let containerWidth = value.getConatiner().width;
+        let containerHeight = value.getConatiner().height;
+        value.getConatiner().position.set(-(containerWidth * 0.5), -(containerHeight * 0.5));
     }
     // this.app.stage.position.set(-((finalWidth[1] - initialWH[1]) * 1),-((finalWidth[0] - initialWH[0]) * 1));
     // this.el.nativeElement.style.setTransform(`scale(${this.currentScale})`);
@@ -202,11 +202,11 @@ export class PixiCanvasComponent implements OnInit {
   }
 
   zoomOut(): void {
-
+    
     if ((Number((this.currentScale + 0.3).toFixed(2))) > 3) {
       return;
     }
-    this.currentScale = Number((this.currentScale + 0.3).toFixed(2));
+    this.currentScale =  Number((this.currentScale + 0.3).toFixed(2));
     // this.app.stage.position.set(this.app.screen.width / 2, this.app.screen.height / 2);
 
     // this.app.stage.pivot.set(this.app.stage.width / 2, this.app.stage.height/2);
@@ -214,30 +214,34 @@ export class PixiCanvasComponent implements OnInit {
     // this.app.stage.anchor.set(0.5);
     // this.app.stage.scale.set(this.currentScale,this.currentScale);
     for (const [key, value] of this.clickableContainerMap) {
-      let initialWH = [value.getConatiner().width, value.getConatiner().height];
+      let initialWH = [value.getConatiner().width,value.getConatiner().height];
+      // let minx = this.findMinX(value.getcenterXYRecCordinate());
+      // let miny = this.findMinY(value.getcenterXYRecCordinate());
       value.getConatiner().scale.set(this.currentScale);
-      let finalWidth = [value.getConatiner().width, value.getConatiner().height];
+      let finalWidth = [value.getConatiner().width,value.getConatiner().height];
+      let containerWidth = value.getConatiner().width;
+      let containerHeight = value.getConatiner().height;
       let newX = value.getConatiner().x - ((finalWidth[0] - initialWH[0]) * 0.25);
       let newY = value.getConatiner().y - ((finalWidth[1] - initialWH[1]) * 0.25);
       value.getConatiner().position.set(newX, newY);
-    }
+  }
     this.app.renderer.resize(window.innerWidth * this.currentScale, window.innerHeight * this.currentScale);
     // this.app.stage.position.set((initialWH[0]-finalWidth[0]),((initialWH[1]-finalWidth[1])));
     // this.resetImage(); 
-    // Calculate new x and y to center the app
-    // const newX = (window.innerWidth - this.app.screen.width) / 2;
-    // const newY = (window.innerHeight - this.app.screen.height) / 2;
+     // Calculate new x and y to center the app
+  // const newX = (window.innerWidth - this.app.screen.width) / 2;
+  // const newY = (window.innerHeight - this.app.screen.height) / 2;
 
-    // Set the new position
-    // if(this.app.view.style){
-    //   this.app.view.style.left = newX + 'px';
-    //   this.app.view.style.top = newY + 'px';
-    // }
-
-
+  // Set the new position
+  // if(this.app.view.style){
+  //   this.app.view.style.left = newX + 'px';
+  //   this.app.view.style.top = newY + 'px';
+  // }
+ 
+   
   }
 
-  private resetImage(): void {
+  private resetImage():void{
     for (const [key, value] of this.clickableContainerMap) {
       let data = value.getcenterXYRecCordinate();
       if (data) {
@@ -245,7 +249,7 @@ export class PixiCanvasComponent implements OnInit {
         const gapY = value.getGapY();
         const initialRecPosition = value.getInitialContainerPositon();
         let widthHeight = value.getWidthHeight();
-        if (60 * this.currentScale < 0 || 20 * this.currentScale < 0) {
+        if(60 * this.currentScale < 0 || 20 * this.currentScale < 0){
           return;
         }
         value.setScale(this.currentScale);
@@ -264,7 +268,7 @@ export class PixiCanvasComponent implements OnInit {
         console.log(value);
         this.setScale(this.currentScale);
         for (let i: number = 0; i < data.length; i++) {
-          value.clickOnRectangle(data[i][0], data[i][1]);
+          value.clickOnRectangle(data[i][0]/this.app.stage.scale.x, data[i][1]/this.app.stage.scale.y);
           this.updatePanelCount(value.zonesCount(), false, key);
         }
         if (!isEnable) {
@@ -295,7 +299,7 @@ export class PixiCanvasComponent implements OnInit {
         value.setGapY(Number(this.inputValue));
         console.log(value);
         for (let i: number = 0; i < newData.length; i++) {
-          value.clickOnRectangle(newData[i][0], newData[i][1]);
+          value.clickOnRectangle(newData[i][0]/this.app.stage.scale.x, newData[i][1]/this.app.stage.scale.y);
           this.updatePanelCount(value.zonesCount(), false, key);
           // this.measurentContainer.visible = false;
         }
@@ -415,7 +419,7 @@ export class PixiCanvasComponent implements OnInit {
       for (let j: number = 1; j < data[i].length; j++) {
         let value = this.clickableContainerMap.get(this.highlightedKey);
         if (value) {
-          value.clickOnRectangle(data[i][j][0], data[i][j][1]);
+          value.clickOnRectangle(data[i][j][0]/this.app.stage.scale.x, data[i][j][1]/this.app.stage.scale.y);
         }
       }
       let value = this.clickableContainerMap.get(this.highlightedKey);
@@ -516,11 +520,11 @@ export class PixiCanvasComponent implements OnInit {
 
   private subscribeMouseMovementEventForDragEvent(): void {
     // @ts-ignore
-    this.app.view.addEventListener('mousedown', this.onMouseDown.bind(this));
-    // @ts-ignore
-    this.app.view.addEventListener('mousemove', this.onMouseMove.bind(this));
-    // @ts-ignore
-    document.addEventListener('mouseup', this.onMouseUp.bind(this));
+    // this.app.view.addEventListener('mousedown', this.onMouseDown.bind(this));
+    // // @ts-ignore
+    // this.app.view.addEventListener('mousemove', this.onMouseMove.bind(this));
+    // // @ts-ignore
+    // document.addEventListener('mouseup', this.onMouseUp.bind(this));
   }
 
   private onMouseDown(event: MouseEvent): void {
@@ -530,7 +534,7 @@ export class PixiCanvasComponent implements OnInit {
     }
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
-        let xy = value.CheckCordinateInRectangle(event.offsetX, event.offsetY);
+        let xy = value.CheckCordinateInRectangle(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
         if (xy?.length) {
           this.mouseDown = true;
           this.currentX = xy[0] - (this.width * 0.5);
@@ -543,17 +547,13 @@ export class PixiCanvasComponent implements OnInit {
   private onMouseMove(event: MouseEvent): void {
     if (this.mouseDown) {
       if (this.currentX !== undefined && this.currentY !== undefined) {
-        for (const [key, value] of this.clickableContainerMap) {
-          let newEventX = Number(((event.offsetX - value.getConatiner().x )).toFixed(0)) ;
-          let newEventY = Number((event.offsetY - value.getConatiner().y).toFixed(0));
-          newEventX = Number((newEventX / value.getConatiner().scale.x).toFixed(0));
-          newEventY = Number((newEventY/ value.getConatiner().scale.y).toFixed(0));
-          if (newEventX > this.currentX + this.width || newEventY> this.currentY + this.height ||
-            newEventX > this.currentX - this.width || newEventY > this.currentY - this.height) {
+        if (event.offsetX/this.app.stage.scale.x > this.currentX + this.width || event.offsetY/this.app.stage.scale.y > this.currentY + this.height ||
+          event.offsetX/this.app.stage.scale.x > this.currentX - this.width || event.offsetY/this.app.stage.scale.y > this.currentY - this.height) {
+          for (const [key, value] of this.clickableContainerMap) {
             if (value.getEnabled()) {
-              value.getEnabled() && value.clickOnRectangle(event.offsetX
-                , event.offsetY
-              );
+              value.getEnabled() && value.clickOnRectangle(event.offsetX/this.app.stage.scale.x
+                , event.offsetY/this.app.stage.scale.y
+                );
               this.updatePanelCount(value.zonesCount(), false, key);
               this.measurentContainer.visible = false;
               break
@@ -604,13 +604,13 @@ export class PixiCanvasComponent implements OnInit {
           if (this.clickableContainerMap.size === 1 && value.getcenterXYRecCordinate().length === 0) {
             this.clickableContainerMap.clear();
             this.createClickableContainer();
-            this.clickableContainerMap.get(this.highlightedKey)?.setPosition(event.offsetX, event.offsetY);
-            this.clickableContainerMap.get(this.highlightedKey)?.clickOnRectangle(event.offsetX, event.offsetY);
+            this.clickableContainerMap.get(this.highlightedKey)?.setPosition(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
+            this.clickableContainerMap.get(this.highlightedKey)?.clickOnRectangle(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
             this.updatePanelCount(value.zonesCount(), false, key);
             break
           } else {
             if (value.getEnabled()) {
-              value.clickOnRectangle(event.offsetX, event.offsetY);
+              value.clickOnRectangle(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
               this.updatePanelCount(value.zonesCount(), false, key);
             }
             this.measurentContainer.visible = false;
@@ -621,7 +621,7 @@ export class PixiCanvasComponent implements OnInit {
         let value = this.clickableContainerMap.get(this.highlightedKey);
         if (value) {
           value.setPosition(event.offsetX, event.offsetY);
-          value.clickOnRectangle(event.offsetX, event.offsetY);
+          value.clickOnRectangle(event.offsetX/this.app.stage.scale.x, event.offsetY/this.app.stage.scale.y);
           this.updatePanelCount(value.zonesCount(), true, this.highlightedKey);
         }
 
@@ -770,13 +770,12 @@ export class PixiCanvasComponent implements OnInit {
     let xyArray = highlightedObj?.getXYArray(true);
     let recCordinate = highlightedObj?.getRectangleCordinate(true);
     let centerRecCordinate = highlightedObj?.getcenterXYRecCordinate(true);
-    const centerxycordinatesMapInXPerspective = new Map(highlightedObj?.getcenterxycordinatesMapInXPerspective());
-    const centerxycordinatesMapInYPerspective = new Map(highlightedObj?.getcenterxycordinatesMapInYPerspective());
-    let scaleX = highlightedObj?.getConatiner().scale.x;
-    let scaleY = highlightedObj?.getConatiner().scale.y;
+    const centerxycordinatesMapInXPerspective = new Map(highlightedObj?.centerxycordinatesMapInXPerspective);
+    const centerxycordinatesMapInYPerspective = new Map(highlightedObj?.centerxycordinatesMapInYPerspective);
     let key: string = `clickableContainer${this.clickableContainerMap.size}`;
     let container: ClickableContainer = new ClickableContainer(this.app, key, clonedContainer);
     this.enableDisableAllContainer(false);
+    container.setScale(this.currentScale);
     this.setScale(this.currentScale);
     this.highlightedKey = key;
     this.clickableContainerMap.set(key, container);
@@ -787,7 +786,6 @@ export class PixiCanvasComponent implements OnInit {
       clonedObj.setEnabled(true);
       if (xy) {
         clonedObj.setXY(xy[0], xy[1]);
-        clonedObj.getConatiner().scale.set(scaleX,scaleY);
         clonedObj.setInitialContainerPosition(xy[0], xy[1]);
       }
       clonedObj.centerxycordinatesMapInYPerspective = centerxycordinatesMapInYPerspective;

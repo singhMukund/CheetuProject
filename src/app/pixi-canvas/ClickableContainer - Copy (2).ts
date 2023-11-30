@@ -79,24 +79,6 @@ export class ClickableContainer {
         this.movementManagement();
     }
 
-    public getcenterxycordinatesMapInXPerspective() : Map<number, number[][]>{
-        const newMap : Map<number, number[][]> = new Map();
-        for(const [key, value] of this.centerxycordinatesMapInXPerspective){
-            const new_Value = value.map(row => [...row]);
-            newMap.set(key, new_Value);
-        }
-        return newMap
-    }
-
-    public getcenterxycordinatesMapInYPerspective() : Map<number, number[][]>{
-        const newMap : Map<number, number[][]> = new Map();
-        for(const [key, value] of this.centerxycordinatesMapInYPerspective){
-            const new_Value = value.map(row => [...row]);
-            newMap.set(key, new_Value);
-        }
-        return newMap
-    }
-
     setPosition(x:number,y:number)  :void{
         this.rectangleContanier.position.set(x,y);
     }
@@ -266,21 +248,13 @@ export class ClickableContainer {
         }
     }
 
-    whDiffernce : number[] = [0,0];
-
-    setWidthDifference(w : number,h:number) :void{
-        this.whDiffernce = [w,h];
-    }
-
 
 
     CheckCordinateInRectangle(x: number, y: number) {
-        // x = x / this.rectangleContanier.scale.x;
-        // y = y/ this.rectangleContanier.scale.y;
-        x = Number(((x - this.rectangleContanier.x )).toFixed(0)) ;
-        y = Number((y - this.rectangleContanier.y).toFixed(0));
-         x = Number((x / this.rectangleContanier.scale.x).toFixed(0));
-        y = Number((y/ this.rectangleContanier.scale.y).toFixed(0));
+        // x = x / this.app.stage.scale.x;
+        // y = y/ this.app.stage.scale.y;
+        x = Number(((x - this.rectangleContanier.x)).toFixed(0)) ;
+        y = y - Number((this.rectangleContanier.y).toFixed(0));
         if (this.rectangleCordinate.length) {
             for (let i = 0; i < this.rectangleCordinate.length; i++) {
                 if (x >= this.rectangleCordinate[i][0] && x <= this.rectangleCordinate[i][1] && y >= this.rectangleCordinate[i][2] && y <= this.rectangleCordinate[i][3]) {
