@@ -53,6 +53,7 @@ export class PixiCanvasComponent implements OnInit {
   zone_A_count: number = 2
   totalBlackBox: number = 0;
   blackBoxCountForSelectedOne: number = 0;
+  private baseGap : number = 15;
   private tableData: ITABLEDATA[] = [
     {
       firstCol: 'Zone Name ',
@@ -134,7 +135,7 @@ export class PixiCanvasComponent implements OnInit {
   ///Issue is that gap is constant through out
 
   private toFixed(num: number): number {
-    return (Number((num).toFixed(1)));
+    return (Number((num).toFixed(0)));
   }
 
   zoomIn(): void {
@@ -239,7 +240,7 @@ export class PixiCanvasComponent implements OnInit {
 
   private resetImage(): void {
     for (const [key, value] of this.clickableContainerMap) {
-      let data = value.getcenterXYRecCordinate();
+      let data = value.getcenterXYRecCordinate(true);
       if (data) {
         let isEnable = value.getEnabled();
         const gapY = value.getGapY();
@@ -287,21 +288,31 @@ export class PixiCanvasComponent implements OnInit {
       if (value.getEnabled()) {
         const oldGapY = value.getGapY();
         const gapDifference = Number(this.inputValue) - oldGapY;
-        const data = value.getcenterXYRecCordinate();
+        let initialWH = [value.getConatiner().width,value.getConatiner().height];
+        let data = value.getcenterXYRecCordinate(true);
+        const scaleX = value.getConatiner().scale.x;
+        const scaleY = value.getConatiner().scale.y;
         data.sort((a, b) => a[1] - b[1]);
         const minV = this.findMinY(data);
-        const newData = this.updateData(data, minV, gapDifference, oldGapY);
+        let newData = this.updateData(data, minV, gapDifference, oldGapY);
         value.resetBoxes();
         value.setGapY(Number(this.inputValue));
         console.log(value);
         for (let i: number = 0; i < newData.length; i++) {
-          value.clickOnRectangle(newData[i][0], newData[i][1]);
+          value.clickOnRectangle(newData[i][0], newData[i][1],true);
           this.updatePanelCount(value.zonesCount(), false, key);
-          // this.measurentContainer.visible = false;
         }
+        let finalWidth = [value.getConatiner().width, value.getConatiner().height];
+        let newX = value.getConatiner().x - ((finalWidth[0] - initialWH[0]) * 0.25);
+        let newY = value.getConatiner().y - ((finalWidth[1] - initialWH[1]) * 0.25);
+        value.getConatiner().position.set(newX, newY);
+        value.getConatiner().scale.set(scaleX,scaleY);
+        data = [];
+        newData = [];
       }
     }
   }
+
 
   private findMinY(data: any): number {
     let minY: number = data[0][1];
@@ -347,7 +358,8 @@ export class PixiCanvasComponent implements OnInit {
       const changeInY = (data[i][1] - minV) / (oldGap + this.height) * difference;
       data[i][1] = data[i][1] + this.toFixed(changeInY);
     }
-    return data;
+    const newData = data.map(row => [...row]);
+    return newData;
   }
 
   onDeleteButtonClick(event: MouseEvent): void {
@@ -412,6 +424,9 @@ export class PixiCanvasComponent implements OnInit {
       this.enableDisableAllContainer(false);
       this.createClickableContainer();
       this.hideAllContainer();
+      for (let j: number = 1; j < data[i].length; j++) {
+
+      }
       for (let j: number = 1; j < data[i].length; j++) {
         let value = this.clickableContainerMap.get(this.highlightedKey);
         if (value) {
@@ -734,9 +749,14 @@ export class PixiCanvasComponent implements OnInit {
     this.hideAllContainer();
     this.enableDisableAllContainer(false);
     let key: string = event.target.name;
-    this.clickableContainerMap.get(key)?.showAll();
-    this.clickableContainerMap.get(key)?.setEnabled(true);
-    this.clickableContainerMap.get(key)?.setPositionButtonVisible(true);
+    let value = this.clickableContainerMap.get(key);
+    if(value){
+      value.isDeleteClickable = true;
+      value.showAll();
+      value.setEnabled(true);
+      value.setPositionButtonVisible(true);
+    }
+    
   }
   // this.clickableContainerMap.get(this.highlightedKey)?.onButtonDown();
 
@@ -774,6 +794,8 @@ export class PixiCanvasComponent implements OnInit {
     const centerxycordinatesMapInYPerspective = new Map(highlightedObj?.getcenterxycordinatesMapInYPerspective());
     let scaleX = highlightedObj?.getConatiner().scale.x;
     let scaleY = highlightedObj?.getConatiner().scale.y;
+    let gapY:number|undefined = highlightedObj?.getGapY();
+
     let key: string = `clickableContainer${this.clickableContainerMap.size}`;
     let container: ClickableContainer = new ClickableContainer(this.app, key, clonedContainer);
     this.enableDisableAllContainer(false);
@@ -797,6 +819,9 @@ export class PixiCanvasComponent implements OnInit {
       clonedObj.setXYArray(xyArray ? xyArray[0] : [], xyArray ? xyArray[1] : []);
       clonedObj.changeButtonPosition();
       clonedObj.setZonesPositions();
+      if(gapY){
+        clonedObj.setGapY(gapY);
+      }
       this.updatePanelCount(container.zonesCount(), true, key);
     }
     if (clonedObj?.getConatiner()) {

@@ -286,11 +286,13 @@ export class PixiCanvasComponent implements OnInit {
     return data;
   }
 
-  getValue() {
+   getValue() {
     for (const [key, value] of this.clickableContainerMap) {
       if (value.getEnabled()) {
         const oldGapY = value.getGapY();
         const gapDifference = Number(this.inputValue) - oldGapY;
+        let initialWH = [value.getConatiner().width,value.getConatiner().height];
+
         const data = value.getcenterXYRecCordinate();
         data.sort((a, b) => a[1] - b[1]);
         const minV = this.findMinY(data);
@@ -303,6 +305,10 @@ export class PixiCanvasComponent implements OnInit {
           this.updatePanelCount(value.zonesCount(), false, key);
           // this.measurentContainer.visible = false;
         }
+        let finalWidth = [value.getConatiner().width,value.getConatiner().height];
+        let newX = value.getConatiner().x - ((finalWidth[0] - initialWH[0]) * 0.25);
+        let newY = value.getConatiner().y - ((finalWidth[1] - initialWH[1]) * 0.25);
+        value.getConatiner().position.set(newX, newY);
       }
     }
   }

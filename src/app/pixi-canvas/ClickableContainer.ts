@@ -53,8 +53,9 @@ export class ClickableContainer {
     private initialContainerYPosition: number = 0;
     private isTopBarrier: boolean = false;
     private isDownBarrier: boolean = false;
-    private isLeftBarrier: boolean = true;
+    private isLeftBarrier: boolean = false;
     private isRightBarrier: boolean = false;
+    isDeleteClickable : boolean = true;
 
 
 
@@ -248,14 +249,18 @@ export class ClickableContainer {
         // });
     }
 
-    clickOnRectangle(x: number, y: number) {
-        let xyPositions = this.CheckCordinateInRectangle(x, y);
-        this.setInitialContainerPosition(this.rectangleContanier.x, this.rectangleContanier.y);
-        console.log(xyPositions);
-        if (xyPositions) {
-            this.createRectangle(xyPositions[0], xyPositions[1]);
-            // console.log("Click from inside");
-        }
+    clickOnRectangle(x: number, y: number,doNotCheck?:boolean) {
+        if(doNotCheck){
+            this.setInitialContainerPosition(this.rectangleContanier.x, this.rectangleContanier.y);
+            this.createRectangle(x, y);
+        }else{
+            let xyPositions = this.CheckCordinateInRectangle(x, y);
+            this.setInitialContainerPosition(this.rectangleContanier.x, this.rectangleContanier.y);
+            console.log(xyPositions);
+            if (xyPositions) {
+                this.createRectangle(xyPositions[0], xyPositions[1]);
+            }
+        }  
     }
 
     public checkIsThisClickIsOfSameObject(x: number, y: number): boolean {
@@ -295,7 +300,7 @@ export class ClickableContainer {
 
     createRectangle(x: number, y: number) {
       // this.stopMouseClick = true;
-      if (this.checkAndRemove(x, y)) {
+      if (this.isDeleteClickable && this.checkAndRemove(x, y)) {
         return;
     }
     if (this.checkRectangleExistOrNot(x, y)) {
@@ -504,21 +509,22 @@ export class ClickableContainer {
         return true;
     }
 
-    findMinKeyInMap<K>(map: Map<K, any>): K | undefined {
-        let minKey: K | undefined = undefined;
+    findMinKeyInMap<K>(map: Map<K, any>): number {
+        let minKey: number = Number.POSITIVE_INFINITY;
+        // return Math.max(map.keys())
         for (const key of map.keys()) {
-            if (minKey === undefined || (minKey && key < minKey)) {
-                minKey = key;
+            if (Number(key) < minKey) {
+                minKey = Number(key);
             }
         }
         return minKey;
     }
 
-    findMaxKeyInMap<K>(map: Map<K, any>): K | undefined {
-        let maxKey: K | undefined = undefined;
+    findMaxKeyInMap<K>(map: Map<K, any>): number {
+        let maxKey: number = Number.NEGATIVE_INFINITY;
         for (const key of map.keys()) {
-            if (maxKey === undefined || (maxKey && key > maxKey)) {
-                maxKey = key;
+            if (maxKey < Number(key)) {
+                maxKey = Number(key);
             }
         }
         return maxKey;
@@ -651,7 +657,7 @@ export class ClickableContainer {
 
         if (minKey !== undefined && minKey !== null && maxKey !== undefined && maxKey !== null) {
             this.centerxycordinatesMapInYPerspective.forEach((value, key) => {
-                if ((minKey && key > minKey) && (maxKey && key < maxKey)) {
+                if ((key > minKey) && (key < maxKey)) {
                     for (let i: number = 0; i < value.length; i++) {
                         if ((i === 1) || (i === value.length - 2)) {
                             if (i !== 0 && i !== value.length - 1) {
@@ -1210,6 +1216,7 @@ export class ClickableContainer {
     public hideAll(): void {
         // const color = new filters.ColorMatrixFilter();
         // color.desaturate();
+        this.isDeleteClickable = false;
         for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
             if ((this.rectangleContanier.children[i] as Container).children.length) {
                 for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
@@ -1233,6 +1240,7 @@ export class ClickableContainer {
     }
 
     public showAll(): void {
+        
         for (let i: number = 0; i < this.rectangleContanier.children.length; i++) {
             if ((this.rectangleContanier.children[i] as Container).children.length) {
                 for (let j: number = 0; j < (this.rectangleContanier.children[i] as Container).children.length; j++) {
@@ -1242,6 +1250,9 @@ export class ClickableContainer {
             }
         }
         this.changePositionButton.visible = true;
+        setTimeout(()=>{
+            this.isDeleteClickable = true;
+        },500)
     }
 
     public setEnabled(value: boolean): void {

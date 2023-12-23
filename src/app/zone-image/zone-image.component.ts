@@ -50,111 +50,111 @@ export class ZoneImageComponent {
   constructor(private el: ElementRef, private sharedDataService: SharedDataService) { }
 
   ngOnInit() {
-    // this.app = new Application({
-    //   // width: 1920,
-    //   // height: 400,
-    //   // backgroundColor: 0x808080,
-    // });
-    // this.el.nativeElement.appendChild(this.app.view);
-    // (globalThis as any).__PIXI_APP__ = this.app;
+    this.app = new Application({
+      width: 1920,
+      height: 400,
+      backgroundColor: 0x808080,
+    });
+    this.el.nativeElement.appendChild(this.app.view);
+    (globalThis as any).__PIXI_APP__ = this.app;
 
-    this.convertPDF()
-    // this.rectangleContanier = new Container();
-    // // document.getElementById("HAVS")?.append(this.app.view);
+    // this.convertPDF()
+    this.rectangleContanier = new Container();
+    // document.getElementById("HAVS")?.append(this.app.view);
 
-    // this.app.renderer.resize(window.innerWidth, window.innerHeight);
+    this.app.renderer.resize(window.innerWidth, window.innerHeight);
 
-    // // this.app.stage.addChild(this.rectangleContanier);
-
-
-
-    // this.sharedDataService.sendData$.subscribe(async data => {
-    //   for (let i: number = 0; i < data.length; i++) {
-    //     this.receivedData = data[i][0];
-    //     this.createImageContainer(data[i][3]);
-    //     // this.receivedData.x = data[0][1]
-    //     // this.receivedData.y = data[0][3];
-    //     // this.rectangleContanier.addChild(this.receivedData);
-    //     const graphics = new Graphics();
-    //     graphics.lineStyle(2, 0xFF0000, 1);
-    //     const width = new Text(`${data[i][1][2] - data[i][1][1]}`,
-    //       {
-    //         fontFamily: 'Arial',
-    //         fontSize: 24,
-    //         fill: 0xff1010,
-    //         align: 'center',
-    //       });
-
-    //     const height = new Text(`${data[i][1][4] - data[i][1][3]}`,
-    //       {
-    //         fontFamily: 'Arial',
-    //         fontSize: 24,
-    //         fill: 0xff1010,
-    //         align: 'center',
-    //       });
-    //     this.rectangleContanier.scale.set(1.1);
-    //     // const graphics = new Graphics();
-    //     graphics.lineStyle(2, 0xFF0000, 1);
-    //     graphics.moveTo(data[i][1][1], data[i][1][3] - 10);
-    //     graphics.lineTo(data[i][1][2], data[i][1][3] - 10);
-    //     graphics.lineStyle(2, 0xFF0000, 1);
-    //     graphics.moveTo(data[i][1][1] - 10, data[i][1][3]);
-    //     graphics.lineTo(data[i][1][1] - 10, data[i][1][4]);
-
-    //     width.x = graphics.currentPath.points[0] + ((data[i][1][2] - data[i][1][1]) / 2);
-    //     width.y = (graphics.currentPath.points[1]) - 40;
-
-    //     height.x = graphics.currentPath.points[0] - 60;
-    //     height.y = data[i][1][3] + ((data[i][1][4] - data[i][1][3]) / 2);
-    //     const total_row = (data[i][1][2] - data[i][1][1]) / 30;
-    //     const total_col = (data[i][1][4] - data[i][1][3]) / 20;
-    //     const row_count_container = new Container();
-    //     for (let i: number = 0; i < total_row; i++) {
-    //       const row_no = new Text(`${i + 1}`,
-    //         {
-    //           fontFamily: 'Arial',
-    //           fontSize: 24,
-    //           fill: 0x0000ff,
-    //           align: 'center',
-    //         });
-    //       row_count_container.addChild(row_no);
-    //       row_no.x = (i + 1) * 30;
-    //       row_no.y = 120;
-    //     }
-    //     const col_count_container = new Container();
-    //     for (let i: number = 0; i < total_col; i++) {
-    //       const col_no = new Text(`${i + 1}`,
-    //         {
-    //           fontFamily: 'Arial',
-    //           fontSize: 24,
-    //           fill: 0x0000ff,
-    //           align: 'center',
-    //         });
-    //       col_count_container.addChild(col_no);
-    //       col_no.x = 0;
-    //       col_no.y = ((i + 1) * 20) + 120;
-    //     }
-    //     this.rectangleContanier.addChild(col_count_container);
-    //     this.rectangleContanier.addChild(row_count_container);
-    //     this.rectangleContanier.addChild(graphics);
-    //     this.rectangleContanier.addChild(width);
-    //     this.rectangleContanier.addChild(height);
-
-    //     const parentDiv = document.getElementById("parentDiv");
+    // this.app.stage.addChild(this.rectangleContanier);
 
 
 
-    //     // const div = document.createElement('div');
-    //     // const a = document.createElement('img');
-    //     const url = await this.app.renderer.extract.base64(this.receivedData);
-        // a.src = url;
-        // div.appendChild(a);
-        // document.getElementById('zoneImages')?.appendChild(div);
-        // this.rectangleContanier.visible = false;
-      // }
+    this.sharedDataService.sendData$.subscribe(async data => {
+      for (let i: number = 0; i < data.length; i++) {
+        this.receivedData = data[i][0];
+        this.createImageContainer(data[i][3]);
+        // this.receivedData.x = data[0][1]
+        // this.receivedData.y = data[0][3];
+        // this.rectangleContanier.addChild(this.receivedData);
+        const graphics = new Graphics();
+        graphics.lineStyle(2, 0xFF0000, 1);
+        const width = new Text(`${data[i][1][2] - data[i][1][1]}`,
+          {
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xff1010,
+            align: 'center',
+          });
+
+        const height = new Text(`${data[i][1][4] - data[i][1][3]}`,
+          {
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xff1010,
+            align: 'center',
+          });
+        this.rectangleContanier.scale.set(1.1);
+        // const graphics = new Graphics();
+        graphics.lineStyle(2, 0xFF0000, 1);
+        graphics.moveTo(data[i][1][1], data[i][1][3] - 10);
+        graphics.lineTo(data[i][1][2], data[i][1][3] - 10);
+        graphics.lineStyle(2, 0xFF0000, 1);
+        graphics.moveTo(data[i][1][1] - 10, data[i][1][3]);
+        graphics.lineTo(data[i][1][1] - 10, data[i][1][4]);
+
+        width.x = graphics.currentPath.points[0] + ((data[i][1][2] - data[i][1][1]) / 2);
+        width.y = (graphics.currentPath.points[1]) - 40;
+
+        height.x = graphics.currentPath.points[0] - 60;
+        height.y = data[i][1][3] + ((data[i][1][4] - data[i][1][3]) / 2);
+        const total_row = (data[i][1][2] - data[i][1][1]) / 30;
+        const total_col = (data[i][1][4] - data[i][1][3]) / 20;
+        const row_count_container = new Container();
+        for (let i: number = 0; i < total_row; i++) {
+          const row_no = new Text(`${i + 1}`,
+            {
+              fontFamily: 'Arial',
+              fontSize: 24,
+              fill: 0x0000ff,
+              align: 'center',
+            });
+          row_count_container.addChild(row_no);
+          row_no.x = (i + 1) * 30;
+          row_no.y = 120;
+        }
+        const col_count_container = new Container();
+        for (let i: number = 0; i < total_col; i++) {
+          const col_no = new Text(`${i + 1}`,
+            {
+              fontFamily: 'Arial',
+              fontSize: 24,
+              fill: 0x0000ff,
+              align: 'center',
+            });
+          col_count_container.addChild(col_no);
+          col_no.x = 0;
+          col_no.y = ((i + 1) * 20) + 120;
+        }
+        this.rectangleContanier.addChild(col_count_container);
+        this.rectangleContanier.addChild(row_count_container);
+        this.rectangleContanier.addChild(graphics);
+        this.rectangleContanier.addChild(width);
+        this.rectangleContanier.addChild(height);
+
+        const parentDiv = document.getElementById("parentDiv");
+
+
+
+        const div = document.createElement('div');
+        const a = document.createElement('img');
+        const url = await this.app.renderer.extract.base64(this.receivedData);
+        a.src = url;
+        div.appendChild(a);
+        document.getElementById('zoneImages')?.appendChild(div);
+        this.rectangleContanier.visible = false;
+      }
 
       // a.click();
-    // });
+    });
   }
 
   convertPDF(): void {
